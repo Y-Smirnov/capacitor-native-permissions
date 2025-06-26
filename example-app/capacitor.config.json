@@ -1,0 +1,10 @@
+{
+  "appId": "io.ysmirnov.example.permissions",
+  "appName": "example-app",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false
+    }
+  }
+}
