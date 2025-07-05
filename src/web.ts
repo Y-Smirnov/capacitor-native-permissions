@@ -1,10 +1,24 @@
 import { WebPlugin } from '@capacitor/core';
 
+import type { AuthorizationIosOptions, NotificationsStatus } from './models/permission-notifications';
 import type { NativePermissionsPlugin } from './plugin';
 
 export class NativePermissionsWeb extends WebPlugin implements NativePermissionsPlugin {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async echo(_options: { value: string }): Promise<{ value: string }> {
     throw this.unimplemented('Not implemented on web.');
+  }
+
+  checkNotifications(): Promise<{ result: NotificationsStatus }> {
+    throw this.unimplemented('Not implemented on web.');
+  }
+
+  shouldShowNotificationsRationale(): Promise<{ result: boolean }> {
+    throw this.unimplemented('Not implemented on web.');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  requestNotifications(_options?: { options: AuthorizationIosOptions[] }): Promise<{ result: NotificationsStatus }> {
+    throw new Error('Method not implemented.');
   }
 }
