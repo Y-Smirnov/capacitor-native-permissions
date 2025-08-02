@@ -1,5 +1,5 @@
 //
-//  Created by Yevhenii Smirnov on 05/07/2025.
+//  Created by Yevhenii Smirnov
 //
 
 internal enum PermissionStatus: String, CaseIterable {
