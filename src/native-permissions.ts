@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 
-import type { AuthorizationIosOptions, NotificationsStatus } from './models/permission-notifications';
+import type { AuthorizationIosOptions } from './models/permission-notifications';
+import { PermissionStatus } from './models/permission-status';
 import { NativePlugin } from './plugin';
 
 export class NativePermissions {
@@ -10,7 +11,7 @@ export class NativePermissions {
 
   // Notifications
 
-  public static async checkNotifications(): Promise<NotificationsStatus> {
+  public static async checkNotifications(): Promise<PermissionStatus> {
     const { result } = await NativePlugin.checkNotifications();
     return result;
   }
@@ -24,7 +25,7 @@ export class NativePermissions {
     return false;
   }
 
-  public static async requestNotifications(options?: AuthorizationIosOptions[]): Promise<NotificationsStatus> {
+  public static async requestNotifications(options?: AuthorizationIosOptions[]): Promise<PermissionStatus> {
     const { result } = await NativePlugin.requestNotifications({ options: options ?? ['badge', 'alert', 'sound'] });
     return result;
   }

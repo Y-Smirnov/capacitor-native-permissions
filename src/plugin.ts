@@ -1,6 +1,7 @@
 import { registerPlugin } from '@capacitor/core';
 
-import type { AuthorizationIosOptions, NotificationsStatus } from './models/permission-notifications';
+import type { AuthorizationIosOptions } from './models/permission-notifications';
+import type { PermissionStatus } from './models/permission-status';
 
 export const NativePlugin = registerPlugin<NativePermissionsPlugin>('NativePermissionsPlugin', {
   web: () => import('./web').then((m) => new m.NativePermissionsWeb()),
@@ -9,7 +10,7 @@ export const NativePlugin = registerPlugin<NativePermissionsPlugin>('NativePermi
 export interface NativePermissionsPlugin {
   echo(options: { value: string }): Promise<{ value: string }>;
 
-  checkNotifications(): Promise<{ result: NotificationsStatus }>;
+  checkNotifications(): Promise<{ result: PermissionStatus }>;
 
   shouldShowNotificationsRationale(): Promise<{ result: boolean }>;
 

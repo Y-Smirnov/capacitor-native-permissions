@@ -1,6 +1,7 @@
 import { WebPlugin } from '@capacitor/core';
 
-import type { AuthorizationIosOptions, NotificationsStatus } from './models/permission-notifications';
+import type { AuthorizationIosOptions } from './models/permission-notifications';
+import type { PermissionStatus } from './models/permission-status';
 import type { NativePermissionsPlugin } from './plugin';
 
 export class NativePermissionsWeb extends WebPlugin implements NativePermissionsPlugin {
@@ -9,7 +10,7 @@ export class NativePermissionsWeb extends WebPlugin implements NativePermissions
     throw this.unimplemented('Not implemented on web.');
   }
 
-  checkNotifications(): Promise<{ result: NotificationsStatus }> {
+  checkNotifications(): Promise<{ result: PermissionStatus }> {
     throw this.unimplemented('Not implemented on web.');
   }
 
