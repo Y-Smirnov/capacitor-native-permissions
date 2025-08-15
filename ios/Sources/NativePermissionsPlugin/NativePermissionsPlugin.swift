@@ -11,7 +11,9 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "echo", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "checkNotifications", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "shouldShowNotificationsRationale", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "requestNotifications", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "requestNotifications", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "checkAppTrackingTransparency", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestAppTrackingTransparency", returnType: CAPPluginReturnPromise)
     ]
     private let implementation = NativePermissions()
 
@@ -51,6 +53,22 @@ extension NativePermissionsPlugin {
             } catch {
                 call.reject("Unable to request notifications permission.", error.localizedDescription)
             }
+        }
+    }
+}
+
+// App Tracking
+
+extension NativePermissionsPlugin {
+    @objc func checkAppTrackingTransparency(_ call: CAPPluginCall) {
+        let status = AppTrackingTransparency.instance.checkStatus()
+        call.resolve(["result": status.rawValue])
+    }
+
+    @objc func requestAppTrackingTransparency(_ call: CAPPluginCall) {
+        Task {
+            let status = await AppTrackingTransparency.instance.requestPermission()
+            call.resolve(["result": status.rawValue])
         }
     }
 }

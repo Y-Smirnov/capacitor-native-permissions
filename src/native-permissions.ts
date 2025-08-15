@@ -28,4 +28,24 @@ export class NativePermissions {
     const { result } = await NativePlugin.requestNotifications({ options: options ?? ['badge', 'alert', 'sound'] });
     return result;
   }
+
+  // App Tracking
+
+  public static async checkAppTrackingTransparency(): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'ios') {
+      const { result } = await NativePlugin.checkAppTrackingTransparency();
+      return result;
+    }
+
+    return PermissionStatus.NOT_APPLICABLE;
+  }
+
+  public static async requestAppTrackingTransparency(): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'ios') {
+      const { result } = await NativePlugin.requestAppTrackingTransparency();
+      return result;
+    }
+
+    return PermissionStatus.NOT_APPLICABLE;
+  }
 }

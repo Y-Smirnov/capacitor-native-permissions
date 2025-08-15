@@ -18,7 +18,14 @@ export class NativePermissionsWeb extends WebPlugin implements NativePermissions
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  requestNotifications(_options?: { options: AuthorizationIosOptions[] }): Promise<{ result: NotificationsStatus }> {
+  requestNotifications(_options?: { options: AuthorizationIosOptions[] }): Promise<{ result: PermissionStatus }> {
+    throw new Error('Method not implemented.');
+  }
+
+  checkAppTrackingTransparency(): Promise<{ result: PermissionStatus }> {
+    throw new Error('Method not implemented.');
+  }
+  requestAppTrackingTransparency(): Promise<{ result: PermissionStatus }> {
     throw new Error('Method not implemented.');
   }
 }

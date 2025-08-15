@@ -13,5 +13,9 @@ export interface NativePermissionsPlugin {
 
   shouldShowNotificationsRationale(): Promise<{ result: boolean }>;
 
-  requestNotifications(options?: { options: AuthorizationIosOptions[] }): Promise<{ result: NotificationsStatus }>;
+  requestNotifications(options?: { options: AuthorizationIosOptions[] }): Promise<{ result: PermissionStatus }>;
+
+  checkAppTrackingTransparency(): Promise<{ result: PermissionStatus }>;
+
+  requestAppTrackingTransparency(): Promise<{ result: PermissionStatus }>;
 }
