@@ -1,0 +1,23 @@
+.permissions-content {
+    margin: 12px;
+    display: grid;
+    gap: 36px;
+}
+
+.perm-section {
+    display: grid;
+    gap: 24px;
+}
+
+.perm-section-title {
+    padding: 0;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.perm-section-card {
+    margin: 0;
+    width: 100%;
+}
