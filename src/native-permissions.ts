@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 
 import type { AuthorizationIosOptions } from './models/permission-notifications';
 import { PermissionStatus } from './models/permission-status';
+import { SupportedPermissions } from './models/supported-permissions';
 import { NativePlugin } from './plugin';
 
 export class NativePermissions {
@@ -12,13 +13,13 @@ export class NativePermissions {
   // Notifications
 
   public static async checkNotifications(): Promise<PermissionStatus> {
-    const { result } = await NativePlugin.checkNotifications();
+    const { result } = await NativePlugin.check({ permission: SupportedPermissions.Notifications });
     return result;
   }
 
   public static async shouldShowNotificationsRationale(): Promise<boolean> {
     if (Capacitor.getPlatform() == 'android') {
-      const { result } = await NativePlugin.shouldShowNotificationsRationale();
+      const { result } = await NativePlugin.shouldShowRationale({ permission: SupportedPermissions.Notifications });
       return result;
     }
 
@@ -26,7 +27,10 @@ export class NativePermissions {
   }
 
   public static async requestNotifications(options?: AuthorizationIosOptions[]): Promise<PermissionStatus> {
-    const { result } = await NativePlugin.requestNotifications({ options: options ?? ['badge', 'alert', 'sound'] });
+    const { result } = await NativePlugin.request({
+      permission: SupportedPermissions.Notifications,
+      options: options ?? ['badge', 'alert', 'sound'],
+    });
     return result;
   }
 
@@ -34,7 +38,7 @@ export class NativePermissions {
 
   public static async checkAppTrackingTransparency(): Promise<PermissionStatus> {
     if (Capacitor.getPlatform() == 'ios') {
-      const { result } = await NativePlugin.checkAppTrackingTransparency();
+      const { result } = await NativePlugin.check({ permission: SupportedPermissions.AppTrackingTransparency });
       return result;
     }
 
@@ -43,7 +47,7 @@ export class NativePermissions {
 
   public static async requestAppTrackingTransparency(): Promise<PermissionStatus> {
     if (Capacitor.getPlatform() == 'ios') {
-      const { result } = await NativePlugin.requestAppTrackingTransparency();
+      const { result } = await NativePlugin.request({ permission: SupportedPermissions.AppTrackingTransparency });
       return result;
     }
 

@@ -9,12 +9,10 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
     public let jsName = "NativePermissionsPlugin"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "echo", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "checkNotifications", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "shouldShowNotificationsRationale", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "requestNotifications", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "checkAppTrackingTransparency", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "requestAppTrackingTransparency", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "check", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "request", returnType: CAPPluginReturnPromise),
     ]
+
     private let implementation = NativePermissions()
 
     @objc func echo(_ call: CAPPluginCall) {
@@ -23,52 +21,71 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
             "value": implementation.echo(value)
         ])
     }
-}
 
-// Notifications
-extension NativePermissionsPlugin {
-    @objc func checkNotifications(_ call: CAPPluginCall) {
-        Task {
-            let status = await Notifications.instance.checkStatus()
-            call.resolve(["result": status.rawValue])
-        }
-    }
-
-    @objc func shouldShowNotificationsRationale(_ call: CAPPluginCall) {
-        call.resolve([
-            "result": false
-        ])
-    }
-
-    @objc func requestNotifications(_ call: CAPPluginCall) {
-        guard let options = call.getArray("options", String.self) else {
-            call.reject("Missing authorization options.")
+    @objc func check(_ call: CAPPluginCall) {
+        guard let permission = getPermission(call) else {
+            call.reject("Missing 'permission' parameter.")
             return
         }
 
         Task {
             do {
-                let status = try await Notifications.instance.requestPermission(options)
+                var status: PermissionStatus = .denied
+
+                switch permission {
+                case .notifications:
+                    status = await Notifications.instance.checkStatus()
+
+                case .appTrackingTransparency:
+                    status = AppTrackingTransparency.instance.checkStatus()
+                }
+
                 call.resolve(["result": status.rawValue])
-            } catch {
-                call.reject("Unable to request notifications permission.", error.localizedDescription)
             }
         }
     }
-}
 
-// App Tracking
+    @objc func request(_ call: CAPPluginCall) {
+        guard let permission = getPermission(call) else {
+            call.reject("Missing 'permission' parameter.")
+            return
+        }
 
-extension NativePermissionsPlugin {
-    @objc func checkAppTrackingTransparency(_ call: CAPPluginCall) {
-        let status = AppTrackingTransparency.instance.checkStatus()
-        call.resolve(["result": status.rawValue])
+        Task {
+            do {
+                var status: PermissionStatus = .denied
+
+                switch permission {
+
+                case .notifications:
+                    guard let options = call.getArray("options", String.self) else {
+                        call.reject("Missing authorization options.")
+                        return
+                    }
+
+                    status = try await Notifications.instance.requestPermission(options)
+
+                case .appTrackingTransparency:
+                    status = await AppTrackingTransparency.instance.requestPermission()
+                }
+
+                call.resolve(["result": status.rawValue])
+            } catch {
+                call.reject("Unable to request \(permission.rawValue) permission.", error.localizedDescription)
+            }
+        }
     }
 
-    @objc func requestAppTrackingTransparency(_ call: CAPPluginCall) {
-        Task {
-            let status = await AppTrackingTransparency.instance.requestPermission()
-            call.resolve(["result": status.rawValue])
+    private func getPermission(_ call: CAPPluginCall) -> AppPermission? {
+        guard let permission = call.getString("permission") else {
+            return nil
         }
+
+        return AppPermission.allCases.first { $0.rawValue.caseInsensitiveCompare(permission) == .orderedSame }
+    }
+
+    private enum AppPermission: String, CaseIterable {
+        case notifications
+        case appTrackingTransparency
     }
 }

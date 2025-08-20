@@ -5,7 +5,6 @@ import android.os.Build
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import com.getcapacitor.JSObject
@@ -17,9 +16,7 @@ import io.ysmirnov.capacitor.permissions.models.PermissionStatus
 
 @CapacitorPlugin(name = "NativePermissionsPlugin")
 public class NativePermissionsPlugin : Plugin() {
-    private var shouldShowNotificationsRationale = false
-    private var hasOnGoingNotificationsRequest = false
-    private var notificationsRequestCall: PluginCall? = null
+    private var currentRequest: CurrentRequest? = null
 
     private lateinit var notificationsPermissionLauncher: ActivityResultLauncher<String>
 
@@ -28,12 +25,17 @@ public class NativePermissionsPlugin : Plugin() {
             bridge.registerForActivityResult(
                 ActivityResultContracts.RequestPermission(),
             ) { granted ->
+                val request = currentRequest ?: throw Exception("Activity result without currently ongoing permission")
+                val permission =
+                    request.permission.manifestValue()
+                        ?: throw Exception("Activity result without permission manifest value")
+
                 val result: String =
                     if (granted) {
                         PermissionStatus.GRANTED.rawValue
                     } else {
-                        if (!shouldShowNotificationsRationale &&
-                            !ActivityCompat.shouldShowRequestPermissionRationale(activity, PUSH_PERMISSION)
+                        if (request.shouldShowRationale &&
+                            !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
                         ) {
                             PermissionStatus.PERMANENTLY_DENIED.rawValue
                         } else {
@@ -41,11 +43,9 @@ public class NativePermissionsPlugin : Plugin() {
                         }
                     }
 
-                notificationsRequestCall?.resolve(JSObject().put("result", result))
+                request.pluginCall.resolve(JSObject().put("result", result))
 
-                shouldShowNotificationsRationale = false
-                hasOnGoingNotificationsRequest = false
-                notificationsRequestCall = null
+                currentRequest = null
             }
     }
 
@@ -62,8 +62,19 @@ public class NativePermissionsPlugin : Plugin() {
     // Notifications
 
     @PluginMethod
-    public fun checkNotifications(call: PluginCall) {
-        val granted = NotificationManagerCompat.from(context.applicationContext).areNotificationsEnabled()
+    public fun check(call: PluginCall) {
+        val permission =
+            getPermission(call) ?: run {
+                call.reject("Missing or invalid 'permission' parameter.")
+                return
+            }
+
+        val granted =
+            when (permission) {
+                AppPermission.NOTIFICATIONS -> {
+                    NotificationManagerCompat.from(context.applicationContext).areNotificationsEnabled()
+                }
+            }
 
         call.resolve(
             JSObject().put(
@@ -74,43 +85,95 @@ public class NativePermissionsPlugin : Plugin() {
     }
 
     @PluginMethod
-    public fun shouldShowNotificationsRationale(call: PluginCall) {
-        val result: Boolean =
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                false
-            } else {
-                ActivityCompat.shouldShowRequestPermissionRationale(activity, PUSH_PERMISSION)
+    public fun shouldShowRationale(call: PluginCall) {
+        val permission =
+            getPermission(call) ?: run {
+                call.reject("Missing or invalid 'permission' parameter.")
+                return
             }
 
-        call.resolve(JSObject().put("result", result))
+        val manifestPermission =
+            permission.manifestValue() ?: run {
+                call.resolve(JSObject().put("result", false))
+                return
+            }
+
+        val shouldShow = ActivityCompat.shouldShowRequestPermissionRationale(activity, manifestPermission)
+
+        call.resolve(JSObject().put("result", shouldShow))
     }
 
     @PluginMethod
-    public fun requestNotifications(call: PluginCall) {
-        val granted = NotificationManagerCompat.from(context.applicationContext).areNotificationsEnabled()
+    public fun request(call: PluginCall) {
+        val permission =
+            getPermission(call) ?: run {
+                call.reject("Missing or invalid 'permission' parameter.")
+                return
+            }
 
-        if (granted) {
-            call.resolve(JSObject().put("result", PermissionStatus.GRANTED.rawValue))
-            return
-        }
+        val manifestPermission = permission.manifestValue()
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        if (manifestPermission.isNullOrEmpty()) {
+            var granted = false
+
+            when (permission) {
+                AppPermission.NOTIFICATIONS -> {
+                    granted = NotificationManagerCompat.from(context.applicationContext).areNotificationsEnabled()
+                }
+            }
+
             call.resolve(
-                JSObject().put("result", PermissionStatus.PERMANENTLY_DENIED.rawValue),
+                JSObject().put(
+                    "result",
+                    if (granted) PermissionStatus.GRANTED.rawValue else PermissionStatus.PERMANENTLY_DENIED.rawValue,
+                ),
             )
 
             return
         }
 
-        shouldShowNotificationsRationale = ActivityCompat.shouldShowRequestPermissionRationale(activity, PUSH_PERMISSION)
-        hasOnGoingNotificationsRequest = true
-        notificationsRequestCall = call
+        currentRequest =
+            CurrentRequest(
+                permission = AppPermission.NOTIFICATIONS,
+                shouldShowRationale =
+                    ActivityCompat.shouldShowRequestPermissionRationale(
+                        activity,
+                        manifestPermission,
+                    ),
+                pluginCall = call,
+            )
 
-        notificationsPermissionLauncher.launch(PUSH_PERMISSION)
+        notificationsPermissionLauncher.launch(manifestPermission)
+    }
+
+    private fun getPermission(call: PluginCall): AppPermission? {
+        val permission = call.getString("permission") ?: return null
+
+        return AppPermission.entries.firstOrNull { it.name.equals(permission, ignoreCase = true) }
     }
 
     private companion object {
-        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-        private const val PUSH_PERMISSION = Manifest.permission.POST_NOTIFICATIONS
+        private data class CurrentRequest(
+            val permission: AppPermission,
+            val shouldShowRationale: Boolean,
+            val pluginCall: PluginCall,
+        )
+
+        enum class AppPermission {
+            NOTIFICATIONS,
+            ;
+
+            fun manifestValue(): String? =
+                when (this) {
+                    NOTIFICATIONS ->
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            Manifest.permission.POST_NOTIFICATIONS
+                        } else {
+                            null
+                        }
+                }
+
+            fun isSupported(): Boolean = manifestValue() != null
+        }
     }
 }
