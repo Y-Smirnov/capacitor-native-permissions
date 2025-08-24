@@ -2,10 +2,12 @@ import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast } from '
 import React, { useCallback, useMemo, useState } from 'react';
 
 import '../theme/home.css';
-import { checkPermission, requestPermission, shouldShowRationale } from '../services/permission/PermissionService';
+import { permissionRegistry } from '../services/permission/PermissionService';
 import { PermissionType } from '../services/permission/PermissionType';
 
 import PermissionSection from './views/PermissionSection';
+
+type Item = { label: string; onClick: () => void };
 
 const Home: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string>('');
@@ -16,61 +18,60 @@ const Home: React.FC = () => {
     setShowToast(true);
   }, []);
 
-  const permissionCheck = useCallback(
-    async (type: PermissionType) => {
+  const exec = useCallback(
+    async (action: () => Promise<unknown>, success: (res: unknown) => string, failure: string) => {
       try {
-        const res = await checkPermission(type);
-        showResult(`${type} status: ${res.status}`);
+        const res = await action();
+        showResult(success(res));
       } catch (e) {
         console.error(e);
-        showResult(`Failed to check ${type} status.`);
+        showResult(failure);
       }
     },
     [showResult],
   );
 
-  const permissionRationale = useCallback(
-    async (type: PermissionType) => {
-      try {
-        const show = await shouldShowRationale(type);
-        showResult(`[${type}] Should show rationale: ${show}`);
-      } catch (e) {
-        console.error(e);
-        showResult(`Failed to check ${type} rationale.`);
+  const buildItems = useCallback(
+    (type: PermissionType): Item[] => {
+      const handlers = permissionRegistry[type];
+      const items: Item[] = [];
+
+      items.push({
+        label: 'Check permission status',
+        onClick: () =>
+          exec(handlers.check, (status) => `${type} status: ${String(status)}`, `Failed to check ${type} status.`),
+      });
+
+      if (handlers.shouldShowRationale) {
+        items.push({
+          label: 'Should show rationale',
+          onClick: () =>
+            exec(
+              handlers.shouldShowRationale!,
+              (show) => `[${type}] Should show rationale: ${String(show)}`,
+              `Failed to check ${type} rationale.`,
+            ),
+        });
       }
+
+      items.push({
+        label: 'Request permission',
+        onClick: () =>
+          exec(
+            () => handlers.request(),
+            (status) => `${type} request result: ${String(status)}`,
+            `Failed to request ${type} permission.`,
+          ),
+      });
+
+      return items;
     },
-    [showResult],
+    [exec],
   );
 
-  const permissionRequest = useCallback(
-    async (type: PermissionType) => {
-      try {
-        const res = await requestPermission(type);
-        showResult(`${type} request result: ${res.status}`);
-      } catch (e) {
-        console.error(e);
-        showResult(`Failed to request ${type} permission.`);
-      }
-    },
-    [showResult],
-  );
-
-  const notificationItems = useMemo(
-    () => [
-      { label: 'Check permission status', onClick: () => permissionCheck(PermissionType.Notifications) },
-      { label: 'Should show rationale', onClick: () => permissionRationale(PermissionType.Notifications) },
-      { label: 'Request permission', onClick: () => permissionRequest(PermissionType.Notifications) },
-    ],
-    [permissionCheck, permissionRationale, permissionRequest],
-  );
-
-  const appTrackingTransparency = useMemo(
-    () => [
-      { label: 'Check permission status', onClick: () => permissionCheck(PermissionType.AppTrackingTransparency) },
-      { label: 'Request permission', onClick: () => permissionRequest(PermissionType.AppTrackingTransparency) },
-    ],
-    [permissionCheck, permissionRequest],
-  );
+  const notificationItems = useMemo(() => buildItems(PermissionType.Notifications), [buildItems]);
+  const appTrackingTransparency = useMemo(() => buildItems(PermissionType.AppTrackingTransparency), [buildItems]);
+  const bluetoothItems = useMemo(() => buildItems(PermissionType.Bluetooth), [buildItems]);
 
   return (
     <IonPage>
@@ -88,8 +89,8 @@ const Home: React.FC = () => {
 
         <div className="permissions-content">
           <PermissionSection title="Notifications" items={notificationItems} />
-
           <PermissionSection title="App Tracking Transparency" items={appTrackingTransparency} />
+          <PermissionSection title="Bluetooth" items={bluetoothItems} />
         </div>
 
         <IonToast isOpen={showToast} message={toastMessage} duration={2000} onDidDismiss={() => setShowToast(false)} />

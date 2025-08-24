@@ -1,49 +1,45 @@
+import type { PermissionStatus } from 'capacitor-native-permissions';
 import { NativePermissions } from 'capacitor-native-permissions';
 
 import { PermissionType } from './PermissionType';
 
-export type CheckResult =
-  | { type: PermissionType.Notifications; status: string }
-  | { type: PermissionType.AppTrackingTransparency; status: string };
+export type PermissionHandlers = {
+  check: () => Promise<PermissionStatus>;
+  request: () => Promise<PermissionStatus>;
+  shouldShowRationale?: () => Promise<boolean>;
+};
 
-export async function checkPermission(type: PermissionType): Promise<CheckResult> {
-  switch (type) {
-    case PermissionType.Notifications: {
-      const res = await NativePermissions.checkNotifications(); // { status, options? }
-      return { type, status: res };
-    }
-
-    case PermissionType.AppTrackingTransparency: {
-      const status = await NativePermissions.checkAppTrackingTransparency();
-      return { type, status };
-    }
-  }
-}
-
-export async function shouldShowRationale(type: PermissionType): Promise<boolean> {
-  switch (type) {
-    case PermissionType.Notifications:
+export const permissionRegistry: Record<PermissionType, PermissionHandlers> = {
+  [PermissionType.Notifications]: {
+    check: async () => {
+      return await NativePermissions.checkNotifications();
+    },
+    request: async () => {
+      return await NativePermissions.requestNotifications();
+    },
+    shouldShowRationale: async () => {
       return await NativePermissions.shouldShowNotificationsRationale();
+    },
+  },
 
-    case PermissionType.AppTrackingTransparency:
-      // Not applicable; return false by convention
-      return false;
-  }
-}
+  [PermissionType.AppTrackingTransparency]: {
+    check: async () => {
+      return await NativePermissions.checkAppTrackingTransparency();
+    },
+    request: async () => {
+      return await NativePermissions.requestAppTrackingTransparency();
+    },
+  },
 
-export type RequestResult =
-  | { type: PermissionType.Notifications; status: string }
-  | { type: PermissionType.AppTrackingTransparency; status: string };
-
-export async function requestPermission(type: PermissionType): Promise<RequestResult> {
-  switch (type) {
-    case PermissionType.Notifications: {
-      const res = await NativePermissions.requestNotifications(); // { status, options? }
-      return { type, status: res };
-    }
-    case PermissionType.AppTrackingTransparency: {
-      const status = await NativePermissions.requestAppTrackingTransparency();
-      return { type, status };
-    }
-  }
-}
+  [PermissionType.Bluetooth]: {
+    check: async () => {
+      return await NativePermissions.checkBluetooth(['scan', 'connect', 'advertise']);
+    },
+    request: async () => {
+      return await NativePermissions.requestBluetooth(['scan', 'connect', 'advertise']);
+    },
+    shouldShowRationale: async () => {
+      return await NativePermissions.shouldShowBluetoothRationale(['scan', 'connect', 'advertise']);
+    },
+  },
+};
