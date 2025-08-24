@@ -1,6 +1,7 @@
 package io.ysmirnov.capacitor.permissions
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
@@ -17,33 +18,40 @@ import io.ysmirnov.capacitor.permissions.models.PermissionStatus
 @CapacitorPlugin(name = "NativePermissionsPlugin")
 public class NativePermissionsPlugin : Plugin() {
     private var currentRequest: CurrentRequest? = null
-
-    private lateinit var notificationsPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var permissionsLauncher: ActivityResultLauncher<Array<String>>
 
     override fun load() {
-        notificationsPermissionLauncher =
+        permissionsLauncher =
             bridge.registerForActivityResult(
-                ActivityResultContracts.RequestPermission(),
-            ) { granted ->
+                ActivityResultContracts.RequestMultiplePermissions(),
+            ) { permissions ->
                 val request = currentRequest ?: throw Exception("Activity result without currently ongoing permission")
-                val permission =
-                    request.permission.manifestValue()
-                        ?: throw Exception("Activity result without permission manifest value")
 
-                val result: String =
-                    if (granted) {
-                        PermissionStatus.GRANTED.rawValue
-                    } else {
-                        if (request.shouldShowRationale &&
-                            !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
-                        ) {
-                            PermissionStatus.PERMANENTLY_DENIED.rawValue
-                        } else {
-                            PermissionStatus.DENIED.rawValue
+                val status =
+                    permissions
+                        .all { it.value }
+                        .let { granted ->
+                            if (granted) {
+                                PermissionStatus.GRANTED
+                            } else {
+                                val manifestValues =
+                                    request.manifestValues.firstOrNull()
+                                        ?: throw Exception("Activity result without permission manifest value")
+
+                                if (!request.shouldShowRationale &&
+                                    !ActivityCompat.shouldShowRequestPermissionRationale(
+                                        activity,
+                                        permissions.keys.first(),
+                                    )
+                                ) {
+                                    PermissionStatus.PERMANENTLY_DENIED
+                                } else {
+                                    PermissionStatus.DENIED
+                                }
+                            }
                         }
-                    }
 
-                request.pluginCall.resolve(JSObject().put("result", result))
+                request.pluginCall.resolve(JSObject().put("result", status.rawValue))
 
                 currentRequest = null
             }
@@ -59,8 +67,6 @@ public class NativePermissionsPlugin : Plugin() {
         call.resolve(ret)
     }
 
-    // Notifications
-
     @PluginMethod
     public fun check(call: PluginCall) {
         val permission =
@@ -69,10 +75,19 @@ public class NativePermissionsPlugin : Plugin() {
                 return
             }
 
+        val options = getOptions(call)
+        val manifestValues = permission.manifestValues(options)
+
         val granted =
             when (permission) {
                 AppPermission.NOTIFICATIONS -> {
                     NotificationManagerCompat.from(context.applicationContext).areNotificationsEnabled()
+                }
+
+                AppPermission.BLUETOOTH -> {
+                    manifestValues?.all { manifestValue ->
+                        ActivityCompat.checkSelfPermission(activity, manifestValue) == PackageManager.PERMISSION_GRANTED
+                    } ?: true
                 }
             }
 
@@ -92,15 +107,19 @@ public class NativePermissionsPlugin : Plugin() {
                 return
             }
 
-        val manifestPermission =
-            permission.manifestValue() ?: run {
+        val options = getOptions(call)
+        val manifestPermissions =
+            permission.manifestValues(options) ?: run {
                 call.resolve(JSObject().put("result", false))
                 return
             }
 
-        val shouldShow = ActivityCompat.shouldShowRequestPermissionRationale(activity, manifestPermission)
-
-        call.resolve(JSObject().put("result", shouldShow))
+        if (manifestPermissions.isEmpty()) {
+            call.resolve(JSObject().put("result", false))
+        } else {
+            val shouldShow = ActivityCompat.shouldShowRequestPermissionRationale(activity, manifestPermissions.first())
+            call.resolve(JSObject().put("result", shouldShow))
+        }
     }
 
     @PluginMethod
@@ -111,39 +130,49 @@ public class NativePermissionsPlugin : Plugin() {
                 return
             }
 
-        val manifestPermission = permission.manifestValue()
+        val options = getOptions(call)
+        val manifestValues = permission.manifestValues(options)
 
-        if (manifestPermission.isNullOrEmpty()) {
-            var granted = false
-
+        if (manifestValues.isNullOrEmpty()) {
             when (permission) {
                 AppPermission.NOTIFICATIONS -> {
-                    granted = NotificationManagerCompat.from(context.applicationContext).areNotificationsEnabled()
+                    val granted = NotificationManagerCompat.from(context.applicationContext).areNotificationsEnabled()
+
+                    call.resolve(
+                        JSObject().put(
+                            "result",
+                            if (granted) PermissionStatus.GRANTED.rawValue else PermissionStatus.PERMANENTLY_DENIED.rawValue,
+                        ),
+                    )
+
+                    return
+                }
+
+                else -> {
+                    call.resolve(
+                        JSObject().put(
+                            "result",
+                            PermissionStatus.GRANTED.rawValue,
+                        ),
+                    )
+
+                    return
                 }
             }
-
-            call.resolve(
-                JSObject().put(
-                    "result",
-                    if (granted) PermissionStatus.GRANTED.rawValue else PermissionStatus.PERMANENTLY_DENIED.rawValue,
-                ),
-            )
-
-            return
         }
 
         currentRequest =
             CurrentRequest(
-                permission = AppPermission.NOTIFICATIONS,
+                manifestValues = manifestValues,
                 shouldShowRationale =
                     ActivityCompat.shouldShowRequestPermissionRationale(
                         activity,
-                        manifestPermission,
+                        manifestValues.first(),
                     ),
                 pluginCall = call,
             )
 
-        notificationsPermissionLauncher.launch(manifestPermission)
+        permissionsLauncher.launch(manifestValues.toTypedArray())
     }
 
     private fun getPermission(call: PluginCall): AppPermission? {
@@ -152,28 +181,56 @@ public class NativePermissionsPlugin : Plugin() {
         return AppPermission.entries.firstOrNull { it.name.equals(permission, ignoreCase = true) }
     }
 
+    private fun getOptions(call: PluginCall): Array<String>? {
+        val jsArray = call.getArray("options") ?: return null
+        val list = mutableListOf<String>()
+
+        for (i in 0 until jsArray.length()) {
+            list.add(jsArray.optString(i))
+        }
+
+        return list.toTypedArray()
+    }
+
     private companion object {
         private data class CurrentRequest(
-            val permission: AppPermission,
+            val manifestValues: List<String>,
             val shouldShowRationale: Boolean,
             val pluginCall: PluginCall,
         )
 
         enum class AppPermission {
             NOTIFICATIONS,
+            BLUETOOTH,
             ;
 
-            fun manifestValue(): String? =
+            fun manifestValues(options: Array<String>? = null): List<String>? =
                 when (this) {
                     NOTIFICATIONS ->
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            Manifest.permission.POST_NOTIFICATIONS
+                            listOf(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            null
+                        }
+
+                    BLUETOOTH ->
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            val options = options ?: throw Exception("Missing bluetooth permission options")
+
+                            options.mapNotNull { opt ->
+                                when (opt.uppercase()) {
+                                    "SCAN" -> Manifest.permission.BLUETOOTH_SCAN
+                                    "ADVERTISE" -> Manifest.permission.BLUETOOTH_ADVERTISE
+                                    "CONNECT" -> Manifest.permission.BLUETOOTH_CONNECT
+                                    else -> null
+                                }
+                            }
                         } else {
                             null
                         }
                 }
 
-            fun isSupported(): Boolean = manifestValue() != null
+            fun isSupported(): Boolean = manifestValues() != null
         }
     }
 }

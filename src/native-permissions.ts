@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 
+import type { BluetoothAndroidOptions } from './models/bluetooth-android-permissions';
 import type { AuthorizationIosOptions } from './models/permission-notifications';
 import { PermissionStatus } from './models/permission-status';
 import { SupportedPermissions } from './models/supported-permissions';
@@ -31,6 +32,7 @@ export class NativePermissions {
       permission: SupportedPermissions.Notifications,
       options: options ?? ['badge', 'alert', 'sound'],
     });
+
     return result;
   }
 
@@ -52,5 +54,30 @@ export class NativePermissions {
     }
 
     return PermissionStatus.NOT_APPLICABLE;
+  }
+
+  // Bluetooth
+
+  public static async checkBluetooth(options: BluetoothAndroidOptions[]): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.check({ permission: SupportedPermissions.Bluetooth, options: options });
+    return result;
+  }
+
+  public static async shouldShowBluetoothRationale(options: BluetoothAndroidOptions[]): Promise<boolean> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.shouldShowRationale({
+        permission: SupportedPermissions.Bluetooth,
+        options: options,
+      });
+
+      return result;
+    }
+
+    return false;
+  }
+
+  public static async requestBluetooth(options: BluetoothAndroidOptions[]): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.request({ permission: SupportedPermissions.Bluetooth, options: options });
+    return result;
   }
 }

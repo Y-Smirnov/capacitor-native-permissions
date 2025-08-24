@@ -38,6 +38,9 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
 
                 case .appTrackingTransparency:
                     status = AppTrackingTransparency.instance.checkStatus()
+
+                case .bluetooth:
+                    status = Bluetooth.instance.checkStatus()
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -67,6 +70,9 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
 
                 case .appTrackingTransparency:
                     status = await AppTrackingTransparency.instance.requestPermission()
+
+                case .bluetooth:
+                    status = await Bluetooth.instance.requestPermission()
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -87,5 +93,6 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
     private enum AppPermission: String, CaseIterable {
         case notifications
         case appTrackingTransparency
+        case bluetooth
     }
 }
