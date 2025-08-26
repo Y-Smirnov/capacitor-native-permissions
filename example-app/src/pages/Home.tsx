@@ -1,9 +1,9 @@
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast } from '@ionic/react';
+import { SupportedPermissions } from 'capacitor-native-permissions';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import '../theme/home.css';
 import { permissionRegistry } from '../services/permission/PermissionService';
-import { PermissionType } from '../services/permission/PermissionType';
 
 import PermissionSection from './views/PermissionSection';
 
@@ -32,7 +32,7 @@ const Home: React.FC = () => {
   );
 
   const buildItems = useCallback(
-    (type: PermissionType): Item[] => {
+    (type: SupportedPermissions): Item[] => {
       const handlers = permissionRegistry[type];
       const items: Item[] = [];
 
@@ -69,9 +69,11 @@ const Home: React.FC = () => {
     [exec],
   );
 
-  const notificationItems = useMemo(() => buildItems(PermissionType.Notifications), [buildItems]);
-  const appTrackingTransparency = useMemo(() => buildItems(PermissionType.AppTrackingTransparency), [buildItems]);
-  const bluetoothItems = useMemo(() => buildItems(PermissionType.Bluetooth), [buildItems]);
+  const notificationItems = useMemo(() => buildItems(SupportedPermissions.Notifications), [buildItems]);
+  const appTrackingTransparency = useMemo(() => buildItems(SupportedPermissions.AppTrackingTransparency), [buildItems]);
+  const bluetoothItems = useMemo(() => buildItems(SupportedPermissions.Bluetooth), [buildItems]);
+  const calendarItems = useMemo(() => buildItems(SupportedPermissions.Calendar), [buildItems]);
+  const remindersItems = useMemo(() => buildItems(SupportedPermissions.Reminders), [buildItems]);
 
   return (
     <IonPage>
@@ -91,6 +93,8 @@ const Home: React.FC = () => {
           <PermissionSection title="Notifications" items={notificationItems} />
           <PermissionSection title="App Tracking Transparency" items={appTrackingTransparency} />
           <PermissionSection title="Bluetooth" items={bluetoothItems} />
+          <PermissionSection title="Calendar" items={calendarItems} />
+          <PermissionSection title="Reminders" items={remindersItems} />
         </div>
 
         <IonToast isOpen={showToast} message={toastMessage} duration={2000} onDidDismiss={() => setShowToast(false)} />
