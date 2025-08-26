@@ -24,7 +24,7 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func check(_ call: CAPPluginCall) {
         guard let permission = getPermission(call) else {
-            call.reject("Missing 'permission' parameter.")
+            call.reject("Missing permission parameter.")
             return
         }
 
@@ -41,9 +41,20 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
 
                 case .bluetooth:
                     status = Bluetooth.instance.checkStatus()
+                case .calendar:
+                    guard let options = getOptions(call) else {
+                        call.reject("Missing authorization options.")
+                        return
+                    }
+
+                    status = try EventStore.instance.checkCalendarStatus(options)
+                case .reminders:
+                    status = EventStore.instance.checkReminderStatus()
                 }
 
                 call.resolve(["result": status.rawValue])
+            } catch {
+                call.reject("Unable to check \(permission.rawValue) permission.", error.localizedDescription)
             }
         }
     }
@@ -61,7 +72,7 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                 switch permission {
 
                 case .notifications:
-                    guard let options = call.getArray("options", String.self) else {
+                    guard let options = getOptions(call) else {
                         call.reject("Missing authorization options.")
                         return
                     }
@@ -73,6 +84,16 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
 
                 case .bluetooth:
                     status = await Bluetooth.instance.requestPermission()
+
+                case .calendar:
+                    guard let options = getOptions(call) else {
+                        call.reject("Missing calendar access option.")
+                        return
+                    }
+
+                    status = try await EventStore.instance.requestCalendarPermission(options)
+                case .reminders:
+                    status = try await EventStore.instance.requestReminderPermission()
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -90,9 +111,15 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
         return AppPermission.allCases.first { $0.rawValue.caseInsensitiveCompare(permission) == .orderedSame }
     }
 
+    private func getOptions(_ call: CAPPluginCall) -> Array<String>? {
+        return call.getArray("options", String.self)
+    }
+
     private enum AppPermission: String, CaseIterable {
         case notifications
         case appTrackingTransparency
         case bluetooth
+        case calendar
+        case reminders
     }
 }

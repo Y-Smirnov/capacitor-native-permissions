@@ -84,11 +84,10 @@ public class NativePermissionsPlugin : Plugin() {
                     NotificationManagerCompat.from(context.applicationContext).areNotificationsEnabled()
                 }
 
-                AppPermission.BLUETOOTH -> {
-                    manifestValues?.all { manifestValue ->
-                        ActivityCompat.checkSelfPermission(activity, manifestValue) == PackageManager.PERMISSION_GRANTED
+                else ->
+                    manifestValues?.all { manifestValues ->
+                        ActivityCompat.checkSelfPermission(activity, manifestValues) == PackageManager.PERMISSION_GRANTED
                     } ?: true
-                }
             }
 
         call.resolve(
@@ -202,10 +201,11 @@ public class NativePermissionsPlugin : Plugin() {
         enum class AppPermission {
             NOTIFICATIONS,
             BLUETOOTH,
+            CALENDAR,
             ;
 
-            fun manifestValues(options: Array<String>? = null): List<String>? =
-                when (this) {
+            fun manifestValues(options: Array<String>? = null): List<String>? {
+                return when (this) {
                     NOTIFICATIONS ->
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             listOf(Manifest.permission.POST_NOTIFICATIONS)
@@ -228,7 +228,23 @@ public class NativePermissionsPlugin : Plugin() {
                         } else {
                             null
                         }
+
+                    CALENDAR -> {
+                        val options = options ?: throw Exception("Missing calendar permission options")
+
+                        val manifestValues =
+                            options.mapNotNull { opt ->
+                                when (opt.uppercase()) {
+                                    "READ" -> Manifest.permission.READ_CALENDAR
+                                    "WRITE" -> Manifest.permission.WRITE_CALENDAR
+                                    else -> null
+                                }
+                            }
+
+                        return if (!manifestValues.isEmpty()) manifestValues else null
+                    }
                 }
+            }
 
             fun isSupported(): Boolean = manifestValues() != null
         }

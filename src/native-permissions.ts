@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 
 import type { BluetoothAndroidOptions } from './models/bluetooth-android-permissions';
+import type { AndroidCalendarOptions, iOSCalendarOptions } from './models/calendar-permissions';
 import type { AuthorizationIosOptions } from './models/permission-notifications';
 import { PermissionStatus } from './models/permission-status';
 import { SupportedPermissions } from './models/supported-permissions';
@@ -79,5 +80,81 @@ export class NativePermissions {
   public static async requestBluetooth(options: BluetoothAndroidOptions[]): Promise<PermissionStatus> {
     const { result } = await NativePlugin.request({ permission: SupportedPermissions.Bluetooth, options: options });
     return result;
+  }
+
+  // Calendar
+
+  public static async checkCalendar(
+    androidOptions: AndroidCalendarOptions[],
+    iosOptions: iOSCalendarOptions,
+  ): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.check({
+        permission: SupportedPermissions.Calendar,
+        options: androidOptions,
+      });
+
+      return result;
+    } else if (Capacitor.getPlatform() == 'ios') {
+      const { result } = await NativePlugin.check({ permission: SupportedPermissions.Calendar, options: [iosOptions] });
+      return result;
+    }
+
+    return PermissionStatus.NOT_APPLICABLE;
+  }
+
+  public static async shouldShowCalendarRationale(androidOptions: AndroidCalendarOptions[]): Promise<boolean> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.shouldShowRationale({
+        permission: SupportedPermissions.Calendar,
+        options: androidOptions,
+      });
+
+      return result;
+    } else {
+      return false;
+    }
+  }
+
+  public static async requestCalendar(
+    androidOptions: AndroidCalendarOptions[],
+    iosOptions: iOSCalendarOptions,
+  ): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.request({
+        permission: SupportedPermissions.Calendar,
+        options: androidOptions,
+      });
+
+      return result;
+    } else if (Capacitor.getPlatform() == 'ios') {
+      const { result } = await NativePlugin.request({
+        permission: SupportedPermissions.Calendar,
+        options: [iosOptions],
+      });
+      return result;
+    }
+
+    return PermissionStatus.NOT_APPLICABLE;
+  }
+
+  // Reminders (iOS only)
+
+  public static async checkReminders(): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'ios') {
+      const { result } = await NativePlugin.check({ permission: SupportedPermissions.Reminders });
+      return result;
+    }
+
+    return PermissionStatus.NOT_APPLICABLE;
+  }
+
+  public static async requestReminders(): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'ios') {
+      const { result } = await NativePlugin.request({ permission: SupportedPermissions.Reminders });
+      return result;
+    }
+
+    return PermissionStatus.NOT_APPLICABLE;
   }
 }
