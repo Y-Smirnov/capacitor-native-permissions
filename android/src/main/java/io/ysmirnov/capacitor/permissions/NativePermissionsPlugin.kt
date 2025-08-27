@@ -207,6 +207,7 @@ public class NativePermissionsPlugin : Plugin() {
             CALENDAR,
             CAMERA,
             CONTACTS,
+            MEDIA,
             ;
 
             fun manifestValues(options: Array<String>? = null): List<String>? {
@@ -251,7 +252,6 @@ public class NativePermissionsPlugin : Plugin() {
 
                     CAMERA -> listOf(Manifest.permission.CAMERA)
 
-                    CONTACTS -> listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
                     CONTACTS -> {
                         val options = options ?: throw Exception("Missing contacts permission options")
 
@@ -267,6 +267,21 @@ public class NativePermissionsPlugin : Plugin() {
                         return if (!manifestValues.isEmpty()) manifestValues else null
                     }
 
+                    MEDIA ->
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                            listOf(
+                                Manifest.permission.READ_MEDIA_IMAGES,
+                                Manifest.permission.READ_MEDIA_VIDEO,
+                                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+                            )
+                        } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.TIRAMISU) {
+                            listOf(
+                                Manifest.permission.READ_MEDIA_IMAGES,
+                                Manifest.permission.READ_MEDIA_VIDEO,
+                            )
+                        } else {
+                            listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                        }
                 }
             }
 

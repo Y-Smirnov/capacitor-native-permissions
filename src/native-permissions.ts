@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import type { BluetoothAndroidOptions } from './models/bluetooth-android-permissions';
 import type { AndroidCalendarOptions, iOSCalendarOptions } from './models/calendar-permissions';
 import type { ContactsAndroidOptions } from './models/contacts-permission';
+import type { MediaIosOptions } from './models/media-permisison';
 import type { AuthorizationIosOptions } from './models/permission-notifications';
 import { PermissionStatus } from './models/permission-status';
 import { SupportedPermissions } from './models/supported-permissions';
@@ -211,10 +212,6 @@ export class NativePermissions {
     return false;
   }
 
-  public static async requestContacts(): Promise<PermissionStatus> {
-    const { result } = await NativePlugin.request({
-      permission: SupportedPermissions.Contacts,
-    });
   public static async requestContacts(androidOptions: ContactsAndroidOptions[]): Promise<PermissionStatus> {
     if (Capacitor.getPlatform() == 'android') {
       const { result } = await NativePlugin.request({
@@ -229,6 +226,42 @@ export class NativePermissions {
     return result;
   }
 
+  // Media
+
+  public static async checkMedia(iosOptions: MediaIosOptions): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'ios') {
+      const { result } = await NativePlugin.check({
+        permission: SupportedPermissions.Media,
+        options: [iosOptions],
+      });
+
+      return result;
+    }
+
+    const { result } = await NativePlugin.check({ permission: SupportedPermissions.Media });
+    return result;
+  }
+
+  public static async shouldShowMediaRationale(): Promise<boolean> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.shouldShowRationale({ permission: SupportedPermissions.Media });
+      return result;
+    }
+
+    return false;
+  }
+
+  public static async requestMedia(iosOptions: MediaIosOptions): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'ios') {
+      const { result } = await NativePlugin.request({
+        permission: SupportedPermissions.Media,
+        options: [iosOptions],
+      });
+
+      return result;
+    }
+
+    const { result } = await NativePlugin.request({ permission: SupportedPermissions.Media });
     return result;
   }
 }

@@ -6,4 +6,5 @@ export enum SupportedPermissions {
   Reminders = 'reminders',
   Camera = 'camera',
   Contacts = 'contacts',
+  Media = 'media',
 }

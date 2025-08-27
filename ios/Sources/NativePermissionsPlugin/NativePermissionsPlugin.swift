@@ -41,6 +41,7 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
 
                 case .bluetooth:
                     status = Bluetooth.instance.checkStatus()
+
                 case .calendar:
                     guard let options = getOptions(call) else {
                         call.reject("Missing authorization options.")
@@ -50,10 +51,20 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     status = try EventStore.instance.checkCalendarStatus(options)
                 case .reminders:
                     status = EventStore.instance.checkReminderStatus()
+
                 case .camera:
                     status = Camera.instance.checkStatus()
+
                 case .contacts:
                     status = Contacts.instance.checkStatus()
+
+                case .media:
+                    guard let options = getOptions(call) else {
+                        call.reject("Missing authorization options.")
+                        return
+                    }
+
+                    status = try MediaLibrary.instance.checkStatus(options)
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -98,10 +109,20 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     status = try await EventStore.instance.requestCalendarPermission(options)
                 case .reminders:
                     status = try await EventStore.instance.requestReminderPermission()
+
                 case .camera:
                     status = await Camera.instance.requestPermission()
+
                 case .contacts:
                     status = try await Contacts.instance.requestPermisison()
+
+                case .media:
+                    guard let options = getOptions(call) else {
+                        call.reject("Missing authorization options.")
+                        return
+                    }
+
+                    status = try await MediaLibrary.instance.requestPermisison(options)
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -131,5 +152,6 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
         case reminders
         case camera
         case contacts
+        case media
     }
 }
