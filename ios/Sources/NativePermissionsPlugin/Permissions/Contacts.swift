@@ -29,12 +29,14 @@ internal final class Contacts {
                     if granted {
                         continuation.resume(returning: .granted)
                     } else {
-                        continuation.resume(returning: .permanentlyDenied)
+                        continuation.resume(returning: .denied)
                     }
 
                     return
                 }
 
+
+                // TODO: consider return false, error is being return when request denied
                 continuation.resume(throwing: error)
             }
         }

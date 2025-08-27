@@ -86,7 +86,10 @@ public class NativePermissionsPlugin : Plugin() {
 
                 else ->
                     manifestValues?.all { manifestValues ->
-                        ActivityCompat.checkSelfPermission(activity, manifestValues) == PackageManager.PERMISSION_GRANTED
+                        ActivityCompat.checkSelfPermission(
+                            activity,
+                            manifestValues,
+                        ) == PackageManager.PERMISSION_GRANTED
                     } ?: true
             }
 
@@ -249,6 +252,21 @@ public class NativePermissionsPlugin : Plugin() {
                     CAMERA -> listOf(Manifest.permission.CAMERA)
 
                     CONTACTS -> listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
+                    CONTACTS -> {
+                        val options = options ?: throw Exception("Missing contacts permission options")
+
+                        val manifestValues =
+                            options.mapNotNull { opt ->
+                                when (opt.uppercase()) {
+                                    "READ" -> Manifest.permission.READ_CONTACTS
+                                    "WRITE" -> Manifest.permission.WRITE_CONTACTS
+                                    else -> null
+                                }
+                            }
+
+                        return if (!manifestValues.isEmpty()) manifestValues else null
+                    }
+
                 }
             }
 

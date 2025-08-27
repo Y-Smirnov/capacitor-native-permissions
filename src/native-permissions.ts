@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 
 import type { BluetoothAndroidOptions } from './models/bluetooth-android-permissions';
 import type { AndroidCalendarOptions, iOSCalendarOptions } from './models/calendar-permissions';
+import type { ContactsAndroidOptions } from './models/contacts-permission';
 import type { AuthorizationIosOptions } from './models/permission-notifications';
 import { PermissionStatus } from './models/permission-status';
 import { SupportedPermissions } from './models/supported-permissions';
@@ -184,14 +185,26 @@ export class NativePermissions {
 
   // Contacts
 
-  public static async checkContacts(): Promise<PermissionStatus> {
+  public static async checkContacts(androidOptions: ContactsAndroidOptions[]): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.check({
+        permission: SupportedPermissions.Contacts,
+        options: androidOptions,
+      });
+
+      return result;
+    }
+
     const { result } = await NativePlugin.check({ permission: SupportedPermissions.Contacts });
     return result;
   }
 
-  public static async shouldShowContactsRationale(): Promise<boolean> {
+  public static async shouldShowContactsRationale(androidOptions: ContactsAndroidOptions[]): Promise<boolean> {
     if (Capacitor.getPlatform() == 'android') {
-      const { result } = await NativePlugin.shouldShowRationale({ permission: SupportedPermissions.Contacts });
+      const { result } = await NativePlugin.shouldShowRationale({
+        permission: SupportedPermissions.Contacts,
+        options: androidOptions,
+      });
       return result;
     }
 
@@ -202,6 +215,19 @@ export class NativePermissions {
     const { result } = await NativePlugin.request({
       permission: SupportedPermissions.Contacts,
     });
+  public static async requestContacts(androidOptions: ContactsAndroidOptions[]): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.request({
+        permission: SupportedPermissions.Contacts,
+        options: androidOptions,
+      });
+
+      return result;
+    }
+
+    const { result } = await NativePlugin.request({ permission: SupportedPermissions.Contacts });
+    return result;
+  }
 
     return result;
   }
