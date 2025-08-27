@@ -4,4 +4,5 @@ export enum SupportedPermissions {
   Bluetooth = 'bluetooth',
   Calendar = 'calendar',
   Reminders = 'reminders',
+  Camera = 'camera',
 }

@@ -157,4 +157,28 @@ export class NativePermissions {
 
     return PermissionStatus.NOT_APPLICABLE;
   }
+
+  // Camera
+
+  public static async checkCamera(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.check({ permission: SupportedPermissions.Camera });
+    return result;
+  }
+
+  public static async shouldShowCameraRationale(): Promise<boolean> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.shouldShowRationale({ permission: SupportedPermissions.Camera });
+      return result;
+    }
+
+    return false;
+  }
+
+  public static async requestCamera(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.request({
+      permission: SupportedPermissions.Camera,
+    });
+
+    return result;
+  }
 }

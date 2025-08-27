@@ -50,6 +50,8 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     status = try EventStore.instance.checkCalendarStatus(options)
                 case .reminders:
                     status = EventStore.instance.checkReminderStatus()
+                case .camera:
+                    status = Camera.instance.checkStatus()
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -94,6 +96,8 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     status = try await EventStore.instance.requestCalendarPermission(options)
                 case .reminders:
                     status = try await EventStore.instance.requestReminderPermission()
+                case .camera:
+                    status = await Camera.instance.requestPermission()
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -121,5 +125,6 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
         case bluetooth
         case calendar
         case reminders
+        case camera
     }
 }
