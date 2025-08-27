@@ -61,4 +61,16 @@ export const permissionRegistry: Record<SupportedPermissions, PermissionHandlers
       return await NativePermissions.requestReminders();
     },
   },
+
+  [SupportedPermissions.Camera]: {
+    check: async () => {
+      return await NativePermissions.checkCamera();
+    },
+    request: async () => {
+      return await NativePermissions.requestCamera();
+    },
+    shouldShowRationale: async () => {
+      return await NativePermissions.shouldShowCameraRationale();
+    },
+  },
 };

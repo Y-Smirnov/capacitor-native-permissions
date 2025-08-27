@@ -74,6 +74,7 @@ const Home: React.FC = () => {
   const bluetoothItems = useMemo(() => buildItems(SupportedPermissions.Bluetooth), [buildItems]);
   const calendarItems = useMemo(() => buildItems(SupportedPermissions.Calendar), [buildItems]);
   const remindersItems = useMemo(() => buildItems(SupportedPermissions.Reminders), [buildItems]);
+  const cameraItems = useMemo(() => buildItems(SupportedPermissions.Camera), [buildItems]);
 
   return (
     <IonPage>
@@ -95,6 +96,7 @@ const Home: React.FC = () => {
           <PermissionSection title="Bluetooth" items={bluetoothItems} />
           <PermissionSection title="Calendar" items={calendarItems} />
           <PermissionSection title="Reminders" items={remindersItems} />
+          <PermissionSection title="Camera" items={cameraItems} />
         </div>
 
         <IonToast isOpen={showToast} message={toastMessage} duration={2000} onDidDismiss={() => setShowToast(false)} />

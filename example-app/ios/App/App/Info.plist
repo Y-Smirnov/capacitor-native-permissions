@@ -35,6 +35,8 @@
 </string>
 	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
 	<string>Use this field to describe usage reason.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Use this field to describe usage reason.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>Use this field to describe usage reason.</string>
 	<key>NSRemindersUsageDescription</key>
