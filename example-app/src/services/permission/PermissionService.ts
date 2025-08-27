@@ -76,13 +76,25 @@ export const permissionRegistry: Record<SupportedPermissions, PermissionHandlers
 
   [SupportedPermissions.Contacts]: {
     check: async () => {
-      return await NativePermissions.checkContacts();
+      return await NativePermissions.checkContacts(['read', 'write']);
     },
     request: async () => {
-      return await NativePermissions.requestContacts();
+      return await NativePermissions.requestContacts(['read', 'write']);
     },
     shouldShowRationale: async () => {
-      return await NativePermissions.shouldShowContactsRationale();
+      return await NativePermissions.shouldShowContactsRationale(['read', 'write']);
+    },
+  },
+
+  [SupportedPermissions.Media]: {
+    check: async () => {
+      return await NativePermissions.checkMedia('readWrite');
+    },
+    request: async () => {
+      return await NativePermissions.requestMedia('readWrite');
+    },
+    shouldShowRationale: async () => {
+      return await NativePermissions.shouldShowMediaRationale();
     },
   },
 };
