@@ -181,4 +181,28 @@ export class NativePermissions {
 
     return result;
   }
+
+  // Contacts
+
+  public static async checkContacts(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.check({ permission: SupportedPermissions.Contacts });
+    return result;
+  }
+
+  public static async shouldShowContactsRationale(): Promise<boolean> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.shouldShowRationale({ permission: SupportedPermissions.Contacts });
+      return result;
+    }
+
+    return false;
+  }
+
+  public static async requestContacts(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.request({
+      permission: SupportedPermissions.Contacts,
+    });
+
+    return result;
+  }
 }

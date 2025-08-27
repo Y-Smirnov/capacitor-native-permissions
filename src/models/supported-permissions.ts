@@ -5,4 +5,5 @@ export enum SupportedPermissions {
   Calendar = 'calendar',
   Reminders = 'reminders',
   Camera = 'camera',
+  Contacts = 'contacts',
 }

@@ -203,6 +203,7 @@ public class NativePermissionsPlugin : Plugin() {
             BLUETOOTH,
             CALENDAR,
             CAMERA,
+            CONTACTS,
             ;
 
             fun manifestValues(options: Array<String>? = null): List<String>? {
@@ -246,6 +247,8 @@ public class NativePermissionsPlugin : Plugin() {
                     }
 
                     CAMERA -> listOf(Manifest.permission.CAMERA)
+
+                    CONTACTS -> listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
                 }
             }
 
