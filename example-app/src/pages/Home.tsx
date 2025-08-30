@@ -78,6 +78,7 @@ const Home: React.FC = () => {
   const contactsItems = useMemo(() => buildItems(SupportedPermissions.Contacts), [buildItems]);
   const mediaItems = useMemo(() => buildItems(SupportedPermissions.Media), [buildItems]);
   const audioRecord = useMemo(() => buildItems(SupportedPermissions.Record), [buildItems]);
+  const location = useMemo(() => buildItems(SupportedPermissions.Location), [buildItems]);
 
   return (
     <IonPage>
@@ -103,6 +104,7 @@ const Home: React.FC = () => {
           <PermissionSection title="Contacts" items={contactsItems} />
           <PermissionSection title="Media" items={mediaItems} />
           <PermissionSection title="Audio Record" items={audioRecord} />
+          <PermissionSection title="Location" items={location} />
         </div>
 
         <IonToast isOpen={showToast} message={toastMessage} duration={2000} onDidDismiss={() => setShowToast(false)} />

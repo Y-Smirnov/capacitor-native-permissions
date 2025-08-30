@@ -109,4 +109,16 @@ export const permissionRegistry: Record<SupportedPermissions, PermissionHandlers
       return await NativePermissions.shouldShowAudioRecordRationale();
     },
   },
+
+  [SupportedPermissions.Location]: {
+    check: async () => {
+      return await NativePermissions.checkLocation('foreground');
+    },
+    request: async () => {
+      return await NativePermissions.requestLocation('foreground');
+    },
+    shouldShowRationale: async () => {
+      return await NativePermissions.shouldShowLocationRationale('foreground');
+    },
+  },
 };
