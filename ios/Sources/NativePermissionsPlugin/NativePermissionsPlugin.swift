@@ -65,6 +65,8 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     }
 
                     status = try MediaLibrary.instance.checkStatus(options)
+                case .record:
+                    status = Audio.instance.checkRecordPermission()
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -123,6 +125,8 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     }
 
                     status = try await MediaLibrary.instance.requestPermisison(options)
+                case .record:
+                    status = await Audio.instance.requestRecordPermission()
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -153,5 +157,6 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
         case camera
         case contacts
         case media
+        case record
     }
 }

@@ -7,4 +7,5 @@ export enum SupportedPermissions {
   Camera = 'camera',
   Contacts = 'contacts',
   Media = 'media',
+  Record = 'record',
 }

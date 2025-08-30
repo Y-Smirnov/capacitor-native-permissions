@@ -264,4 +264,28 @@ export class NativePermissions {
     const { result } = await NativePlugin.request({ permission: SupportedPermissions.Media });
     return result;
   }
+
+  // Record
+
+  public static async checkAudioRecord(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.check({ permission: SupportedPermissions.Record });
+    return result;
+  }
+
+  public static async shouldShowAudioRecordRationale(): Promise<boolean> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.shouldShowRationale({ permission: SupportedPermissions.Record });
+      return result;
+    }
+
+    return false;
+  }
+
+  public static async requestAudioRecord(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.request({
+      permission: SupportedPermissions.Record,
+    });
+
+    return result;
+  }
 }

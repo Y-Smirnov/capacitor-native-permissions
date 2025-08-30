@@ -208,6 +208,7 @@ public class NativePermissionsPlugin : Plugin() {
             CAMERA,
             CONTACTS,
             MEDIA,
+            RECORD,
             ;
 
             fun manifestValues(options: Array<String>? = null): List<String>? {
@@ -282,6 +283,8 @@ public class NativePermissionsPlugin : Plugin() {
                         } else {
                             listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
                         }
+
+                    RECORD -> listOf(Manifest.permission.RECORD_AUDIO)
                 }
             }
 
