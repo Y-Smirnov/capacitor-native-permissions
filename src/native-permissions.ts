@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import type { BluetoothAndroidOptions } from './models/bluetooth-android-permissions';
 import type { AndroidCalendarOptions, iOSCalendarOptions } from './models/calendar-permissions';
 import type { ContactsAndroidOptions } from './models/contacts-permission';
+import type { LocationOptions } from './models/location-permissions';
 import type { MediaIosOptions } from './models/media-permisison';
 import type { AuthorizationIosOptions } from './models/permission-notifications';
 import { PermissionStatus } from './models/permission-status';
@@ -284,6 +285,39 @@ export class NativePermissions {
   public static async requestAudioRecord(): Promise<PermissionStatus> {
     const { result } = await NativePlugin.request({
       permission: SupportedPermissions.Record,
+    });
+
+    return result;
+  }
+
+  // Location
+
+  public static async checkLocation(option: LocationOptions): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.check({
+      permission: SupportedPermissions.Location,
+      options: [option],
+    });
+
+    return result;
+  }
+
+  public static async shouldShowLocationRationale(option: LocationOptions): Promise<boolean> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.shouldShowRationale({
+        permission: SupportedPermissions.Location,
+        options: [option],
+      });
+
+      return result;
+    }
+
+    return false;
+  }
+
+  public static async requestLocation(option: LocationOptions): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.request({
+      permission: SupportedPermissions.Location,
+      options: [option],
     });
 
     return result;

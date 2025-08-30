@@ -15,6 +15,12 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
 
     private let implementation = NativePermissions()
 
+    public override func load() {
+        Task { @MainActor in
+            _ = Location.instance
+        }
+    }
+
     @objc func echo(_ call: CAPPluginCall) {
         let value = call.getString("value") ?? ""
         call.resolve([
@@ -67,6 +73,13 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     status = try MediaLibrary.instance.checkStatus(options)
                 case .record:
                     status = Audio.instance.checkRecordPermission()
+                case .location:
+                    guard let options = getOptions(call) else {
+                        call.reject("Missing authorization options.")
+                        return
+                    }
+
+                    status = try await Location.instance.checkStatus(options)
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -127,6 +140,13 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     status = try await MediaLibrary.instance.requestPermisison(options)
                 case .record:
                     status = await Audio.instance.requestRecordPermission()
+                case .location:
+                    guard let options = getOptions(call) else {
+                        call.reject("Missing authorization options.")
+                        return
+                    }
+
+                    status = try await Location.instance.requestPermission(options)
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -158,5 +178,6 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
         case contacts
         case media
         case record
+        case location
     }
 }

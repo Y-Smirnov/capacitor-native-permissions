@@ -8,4 +8,5 @@ export enum SupportedPermissions {
   Contacts = 'contacts',
   Media = 'media',
   Record = 'record',
+  Location = 'location',
 }

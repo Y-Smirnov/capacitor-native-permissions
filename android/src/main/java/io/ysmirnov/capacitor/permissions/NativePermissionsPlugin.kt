@@ -209,6 +209,7 @@ public class NativePermissionsPlugin : Plugin() {
             CONTACTS,
             MEDIA,
             RECORD,
+            LOCATION,
             ;
 
             fun manifestValues(options: Array<String>? = null): List<String>? {
@@ -285,6 +286,35 @@ public class NativePermissionsPlugin : Plugin() {
                         }
 
                     RECORD -> listOf(Manifest.permission.RECORD_AUDIO)
+                    LOCATION -> {
+                        val options = options ?: throw Exception("Missing location permission option")
+
+                        val manifestValues: List<String> =
+                            options.flatMap { opt ->
+                                when (opt.uppercase()) {
+                                    "FOREGROUND" ->
+                                        listOf(
+                                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                                            Manifest.permission.ACCESS_FINE_LOCATION,
+                                        )
+
+                                    "BACKGROUND" -> {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                            listOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                                        } else {
+                                            listOf(
+                                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                            )
+                                        }
+                                    }
+
+                                    else -> emptyList()
+                                }
+                            }
+
+                        return if (!manifestValues.isEmpty()) manifestValues else null
+                    }
                 }
             }
 

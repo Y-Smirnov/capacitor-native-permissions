@@ -15,11 +15,11 @@ internal final class MediaLibrary: Sendable {
         switch permission {
         case .write:
             let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-            return maptatus(status)
+            return mapStatus(status)
 
         case .readWrite:
             let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-            return maptatus(status)
+            return mapStatus(status)
         }
     }
 
@@ -39,7 +39,7 @@ internal final class MediaLibrary: Sendable {
 
         return try await withCheckedThrowingContinuation { continuation in
             PHPhotoLibrary.requestAuthorization(for: accessLevel) { status in
-                continuation.resume(returning: self.maptatus(status))
+                continuation.resume(returning: self.mapStatus(status))
             }
         }
     }
@@ -56,7 +56,7 @@ internal final class MediaLibrary: Sendable {
         return nil
     }
 
-    private func maptatus(_ status: PHAuthorizationStatus) -> PermissionStatus {
+    private func mapStatus(_ status: PHAuthorizationStatus) -> PermissionStatus {
         switch status {
         case .authorized, .limited:
             return .granted
