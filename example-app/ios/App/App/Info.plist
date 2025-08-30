@@ -39,6 +39,8 @@
 	<string>Use this field to describe usage reason.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Use this field to describe usage reason.\</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Use this field to describe usage reason.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Required if your app uses APIs that have write access to the user’s photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

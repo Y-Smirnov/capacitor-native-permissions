@@ -97,4 +97,16 @@ export const permissionRegistry: Record<SupportedPermissions, PermissionHandlers
       return await NativePermissions.shouldShowMediaRationale();
     },
   },
+
+  [SupportedPermissions.Record]: {
+    check: async () => {
+      return await NativePermissions.checkAudioRecord();
+    },
+    request: async () => {
+      return await NativePermissions.requestAudioRecord();
+    },
+    shouldShowRationale: async () => {
+      return await NativePermissions.shouldShowAudioRecordRationale();
+    },
+  },
 };
