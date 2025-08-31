@@ -30,6 +30,12 @@ internal final class Bluetooth: NSObject, CBCentralManagerDelegate {
     }
 
     internal func requestPermission() async -> PermissionStatus {
+        let status = checkStatus()
+
+        if status == .granted || status == .permanentlyDenied {
+            return status
+        }
+
         return await withCheckedContinuation { continuation in
             self.continuation = continuation
             self.centralManager = CBCentralManager(delegate: self, queue: nil)
@@ -40,11 +46,13 @@ internal final class Bluetooth: NSObject, CBCentralManagerDelegate {
         guard let continuation = continuation else { return }
 
         switch central.state {
-        case .poweredOn:
+        case .unsupported, .unauthorized, .unknown:
+            continuation.resume(returning: .denied)
+
+        case .poweredOn, .poweredOff, .resetting:
             continuation.resume(returning: .granted)
-        case .unauthorized:
-            continuation.resume(returning: .permanentlyDenied)
-        default:
+
+        @unknown default:
             continuation.resume(returning: .denied)
         }
 

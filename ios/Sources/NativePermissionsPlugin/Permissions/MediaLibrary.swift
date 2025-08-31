@@ -1,76 +1,51 @@
-//
-//  Created by Yevhenii Smirnov on 27/08/2025.
-//
-
+import Foundation
 import Photos
 
 internal final class MediaLibrary: Sendable {
     internal static let instance = MediaLibrary()
 
-    internal func checkStatus(_ options: [String]) throws -> PermissionStatus {
-        guard let permission = getPermission(options) else {
-            throw NativePermissionsError.invalidPermissionOptions
-        }
-
-        switch permission {
-        case .write:
-            let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-            return mapStatus(status)
-
-        case .readWrite:
-            let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-            return mapStatus(status)
+    private var accessLevel: PHAccessLevel {
+        if Bundle.main.object(forInfoDictionaryKey: "NSPhotoLibraryUsageDescription") != nil {
+            return .readWrite
+        } else {
+            return .addOnly
         }
     }
 
-    internal func requestPermisison(_ options: [String]) async throws -> PermissionStatus {
-        guard let permission = getPermission(options) else {
-            throw NativePermissionsError.invalidPermissionOptions
+    internal func checkStatus() -> PermissionStatus {
+        let status = PHPhotoLibrary.authorizationStatus(for: accessLevel)
+        return mapStatus(status)
+    }
+
+    internal func requestPermisison() async -> PermissionStatus {
+        let status = checkStatus()
+
+        if status == .granted || status == .permanentlyDenied {
+            return status
         }
 
-        var accessLevel: PHAccessLevel {
-            switch (permission) {
-            case .write:
-                return .addOnly
-            case .readWrite:
-                return .readWrite
-            }
-        }
+        let accessLevel = accessLevel
 
-        return try await withCheckedThrowingContinuation { continuation in
+        return await withCheckedContinuation { continuation in
             PHPhotoLibrary.requestAuthorization(for: accessLevel) { status in
                 continuation.resume(returning: self.mapStatus(status))
             }
         }
     }
 
-    private func getPermission(_ options: [String]) -> MediaLibraryPermission? {
-        for option in options {
-            if let permission = MediaLibraryPermission.allCases.first(where: {
-                $0.rawValue.caseInsensitiveCompare(option) == .orderedSame
-            }) {
-                return permission
-            }
-        }
-
-        return nil
-    }
-
     private func mapStatus(_ status: PHAuthorizationStatus) -> PermissionStatus {
         switch status {
         case .authorized, .limited:
             return .granted
+
         case .denied, .restricted:
             return .permanentlyDenied
+
         case .notDetermined:
             return .denied
+
         @unknown default:
             return .denied
         }
-    }
-
-    private enum MediaLibraryPermission: String, CaseIterable {
-        case write
-        case readWrite
     }
 }

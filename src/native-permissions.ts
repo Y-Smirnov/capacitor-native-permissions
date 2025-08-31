@@ -1,11 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 
-import type { BluetoothAndroidOptions } from './models/bluetooth-android-permissions';
-import type { AndroidCalendarOptions, iOSCalendarOptions } from './models/calendar-permissions';
-import type { ContactsAndroidOptions } from './models/contacts-permission';
-import type { LocationOptions } from './models/location-permissions';
-import type { MediaIosOptions } from './models/media-permisison';
-import type { AuthorizationIosOptions } from './models/permission-notifications';
+import type { NotificationsAuthorizationOptionsIos } from './models/notifications-authorization-options-ios';
 import { PermissionStatus } from './models/permission-status';
 import { SupportedPermissions } from './models/supported-permissions';
 import { NativePlugin } from './plugin';
@@ -31,10 +26,20 @@ export class NativePermissions {
     return false;
   }
 
-  public static async requestNotifications(options?: AuthorizationIosOptions[]): Promise<PermissionStatus> {
+  public static async requestNotifications(
+    options?: NotificationsAuthorizationOptionsIos[],
+  ): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'ios') {
+      const { result } = await NativePlugin.request({
+        permission: SupportedPermissions.Notifications,
+        options: options ?? ['badge', 'alert', 'sound'],
+      });
+
+      return result;
+    }
+
     const { result } = await NativePlugin.request({
       permission: SupportedPermissions.Notifications,
-      options: options ?? ['badge', 'alert', 'sound'],
     });
 
     return result;
@@ -62,16 +67,15 @@ export class NativePermissions {
 
   // Bluetooth
 
-  public static async checkBluetooth(options: BluetoothAndroidOptions[]): Promise<PermissionStatus> {
-    const { result } = await NativePlugin.check({ permission: SupportedPermissions.Bluetooth, options: options });
+  public static async checkBluetooth(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.check({ permission: SupportedPermissions.Bluetooth });
     return result;
   }
 
-  public static async shouldShowBluetoothRationale(options: BluetoothAndroidOptions[]): Promise<boolean> {
+  public static async shouldShowBluetoothRationale(): Promise<boolean> {
     if (Capacitor.getPlatform() == 'android') {
       const { result } = await NativePlugin.shouldShowRationale({
         permission: SupportedPermissions.Bluetooth,
-        options: options,
       });
 
       return result;
@@ -80,37 +84,25 @@ export class NativePermissions {
     return false;
   }
 
-  public static async requestBluetooth(options: BluetoothAndroidOptions[]): Promise<PermissionStatus> {
-    const { result } = await NativePlugin.request({ permission: SupportedPermissions.Bluetooth, options: options });
+  public static async requestBluetooth(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.request({ permission: SupportedPermissions.Bluetooth });
     return result;
   }
 
   // Calendar
 
-  public static async checkCalendar(
-    androidOptions: AndroidCalendarOptions[],
-    iosOptions: iOSCalendarOptions,
-  ): Promise<PermissionStatus> {
-    if (Capacitor.getPlatform() == 'android') {
-      const { result } = await NativePlugin.check({
-        permission: SupportedPermissions.Calendar,
-        options: androidOptions,
-      });
+  public static async checkCalendar(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.check({
+      permission: SupportedPermissions.Calendar,
+    });
 
-      return result;
-    } else if (Capacitor.getPlatform() == 'ios') {
-      const { result } = await NativePlugin.check({ permission: SupportedPermissions.Calendar, options: [iosOptions] });
-      return result;
-    }
-
-    return PermissionStatus.NOT_APPLICABLE;
+    return result;
   }
 
-  public static async shouldShowCalendarRationale(androidOptions: AndroidCalendarOptions[]): Promise<boolean> {
+  public static async shouldShowCalendarRationale(): Promise<boolean> {
     if (Capacitor.getPlatform() == 'android') {
       const { result } = await NativePlugin.shouldShowRationale({
         permission: SupportedPermissions.Calendar,
-        options: androidOptions,
       });
 
       return result;
@@ -119,26 +111,12 @@ export class NativePermissions {
     }
   }
 
-  public static async requestCalendar(
-    androidOptions: AndroidCalendarOptions[],
-    iosOptions: iOSCalendarOptions,
-  ): Promise<PermissionStatus> {
-    if (Capacitor.getPlatform() == 'android') {
-      const { result } = await NativePlugin.request({
-        permission: SupportedPermissions.Calendar,
-        options: androidOptions,
-      });
+  public static async requestCalendar(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.request({
+      permission: SupportedPermissions.Calendar,
+    });
 
-      return result;
-    } else if (Capacitor.getPlatform() == 'ios') {
-      const { result } = await NativePlugin.request({
-        permission: SupportedPermissions.Calendar,
-        options: [iosOptions],
-      });
-      return result;
-    }
-
-    return PermissionStatus.NOT_APPLICABLE;
+    return result;
   }
 
   // Reminders (iOS only)
@@ -187,58 +165,31 @@ export class NativePermissions {
 
   // Contacts
 
-  public static async checkContacts(androidOptions: ContactsAndroidOptions[]): Promise<PermissionStatus> {
-    if (Capacitor.getPlatform() == 'android') {
-      const { result } = await NativePlugin.check({
-        permission: SupportedPermissions.Contacts,
-        options: androidOptions,
-      });
-
-      return result;
-    }
-
+  public static async checkContacts(): Promise<PermissionStatus> {
     const { result } = await NativePlugin.check({ permission: SupportedPermissions.Contacts });
     return result;
   }
 
-  public static async shouldShowContactsRationale(androidOptions: ContactsAndroidOptions[]): Promise<boolean> {
+  public static async shouldShowContactsRationale(): Promise<boolean> {
     if (Capacitor.getPlatform() == 'android') {
       const { result } = await NativePlugin.shouldShowRationale({
         permission: SupportedPermissions.Contacts,
-        options: androidOptions,
       });
+
       return result;
     }
 
     return false;
   }
 
-  public static async requestContacts(androidOptions: ContactsAndroidOptions[]): Promise<PermissionStatus> {
-    if (Capacitor.getPlatform() == 'android') {
-      const { result } = await NativePlugin.request({
-        permission: SupportedPermissions.Contacts,
-        options: androidOptions,
-      });
-
-      return result;
-    }
-
+  public static async requestContacts(): Promise<PermissionStatus> {
     const { result } = await NativePlugin.request({ permission: SupportedPermissions.Contacts });
     return result;
   }
 
   // Media
 
-  public static async checkMedia(iosOptions: MediaIosOptions): Promise<PermissionStatus> {
-    if (Capacitor.getPlatform() == 'ios') {
-      const { result } = await NativePlugin.check({
-        permission: SupportedPermissions.Media,
-        options: [iosOptions],
-      });
-
-      return result;
-    }
-
+  public static async checkMedia(): Promise<PermissionStatus> {
     const { result } = await NativePlugin.check({ permission: SupportedPermissions.Media });
     return result;
   }
@@ -252,16 +203,7 @@ export class NativePermissions {
     return false;
   }
 
-  public static async requestMedia(iosOptions: MediaIosOptions): Promise<PermissionStatus> {
-    if (Capacitor.getPlatform() == 'ios') {
-      const { result } = await NativePlugin.request({
-        permission: SupportedPermissions.Media,
-        options: [iosOptions],
-      });
-
-      return result;
-    }
-
+  public static async requestMedia(): Promise<PermissionStatus> {
     const { result } = await NativePlugin.request({ permission: SupportedPermissions.Media });
     return result;
   }
@@ -292,20 +234,18 @@ export class NativePermissions {
 
   // Location
 
-  public static async checkLocation(option: LocationOptions): Promise<PermissionStatus> {
+  public static async checkLocationForeground(): Promise<PermissionStatus> {
     const { result } = await NativePlugin.check({
-      permission: SupportedPermissions.Location,
-      options: [option],
+      permission: SupportedPermissions.LocationForeground,
     });
 
     return result;
   }
 
-  public static async shouldShowLocationRationale(option: LocationOptions): Promise<boolean> {
+  public static async shouldShowLocationForegroundRationale(): Promise<boolean> {
     if (Capacitor.getPlatform() == 'android') {
       const { result } = await NativePlugin.shouldShowRationale({
-        permission: SupportedPermissions.Location,
-        options: [option],
+        permission: SupportedPermissions.LocationForeground,
       });
 
       return result;
@@ -314,10 +254,37 @@ export class NativePermissions {
     return false;
   }
 
-  public static async requestLocation(option: LocationOptions): Promise<PermissionStatus> {
+  public static async requestLocationForeground(): Promise<PermissionStatus> {
     const { result } = await NativePlugin.request({
-      permission: SupportedPermissions.Location,
-      options: [option],
+      permission: SupportedPermissions.LocationForeground,
+    });
+
+    return result;
+  }
+
+  public static async checkLocationBackground(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.check({
+      permission: SupportedPermissions.LocationBackground,
+    });
+
+    return result;
+  }
+
+  public static async shouldShowLocationBackgroundRationale(): Promise<boolean> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.shouldShowRationale({
+        permission: SupportedPermissions.LocationBackground,
+      });
+
+      return result;
+    }
+
+    return false;
+  }
+
+  public static async requestLocationBackground(): Promise<PermissionStatus> {
+    const { result } = await NativePlugin.request({
+      permission: SupportedPermissions.LocationBackground,
     });
 
     return result;

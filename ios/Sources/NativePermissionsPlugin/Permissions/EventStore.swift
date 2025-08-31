@@ -4,18 +4,28 @@
 
 import Capacitor
 import EventKit
+import Foundation
 
 internal final class EventStore {
     internal static let instance = EventStore()
 
     private let store = EKEventStore()
 
-    internal func checkCalendarStatus(_ options: [String]) throws -> PermissionStatus {
-        guard let permission = getPermission(options) else {
-            throw NativePermissionsError.invalidPermissionOptions
+    private enum CalendarAccessMode {
+        case write
+        case full
+    }
+
+    private var calendarAccessLevel: CalendarAccessMode {
+        if Bundle.main.object(forInfoDictionaryKey: "NSCalendarsFullAccessUsageDescription") != nil {
+            return .full
         }
 
-        switch permission {
+        return .write
+    }
+
+    internal func checkCalendarStatus() -> PermissionStatus {
+        switch calendarAccessLevel {
         case .write:
             let status = EKEventStore.authorizationStatus(for: .event)
             return mapWriteStatus(status)
@@ -31,30 +41,25 @@ internal final class EventStore {
         return mapFullAccessStatus(status)
     }
 
-    internal func requestCalendarPermission(_ options: Array<String>) async throws -> PermissionStatus {
-        guard let permission = getPermission(options) else {
-            throw NativePermissionsError.invalidPermissionOptions
+    internal func requestCalendarPermission() async throws -> PermissionStatus {
+        let status = checkCalendarStatus()
+
+        guard status != .granted || status != .permanentlyDenied else {
+            return status
         }
 
-        switch permission {
+        switch calendarAccessLevel {
         case .write:
             if #available(iOS 17.0, *) {
                 let granted = try await store.requestWriteOnlyAccessToEvents()
-
                 return granted ? .granted : .permanentlyDenied
             } else {
                 return try await withCheckedThrowingContinuation { continuation in
                     store.requestAccess(to: .event) { granted, error in
                         guard let error else {
-                            if granted {
-                                continuation.resume(returning: .granted)
-                            } else {
-                                continuation.resume(returning: .permanentlyDenied)
-                            }
-
+                            continuation.resume(returning: granted ? .granted : .permanentlyDenied)
                             return
                         }
-
                         continuation.resume(throwing: error)
                     }
                 }
@@ -63,21 +68,14 @@ internal final class EventStore {
         case .full:
             if #available(iOS 17.0, *) {
                 let granted = try await store.requestFullAccessToEvents()
-
                 return granted ? .granted : .permanentlyDenied
             } else {
                 return try await withCheckedThrowingContinuation { continuation in
                     store.requestAccess(to: .event) { granted, error in
                         guard let error else {
-                            if granted {
-                                continuation.resume(returning: .granted)
-                            } else {
-                                continuation.resume(returning: .permanentlyDenied)
-                            }
-
+                            continuation.resume(returning: granted ? .granted : .permanentlyDenied)
                             return
                         }
-
                         continuation.resume(throwing: error)
                     }
                 }
@@ -86,39 +84,26 @@ internal final class EventStore {
     }
 
     internal func requestReminderPermission() async throws -> PermissionStatus {
+        let status = checkReminderStatus()
+
+        guard status != .granted || status != .permanentlyDenied else {
+            return status
+        }
+
         if #available(iOS 17.0, *) {
             let granted = try await store.requestFullAccessToReminders()
-
             return granted ? .granted : .permanentlyDenied
         } else {
             return try await withCheckedThrowingContinuation { continuation in
                 store.requestAccess(to: .reminder) { granted, error in
                     guard let error else {
-                        if granted {
-                            continuation.resume(returning: .granted)
-                        } else {
-                            continuation.resume(returning: .permanentlyDenied)
-                        }
-
+                        continuation.resume(returning: granted ? .granted : .permanentlyDenied)
                         return
                     }
-
                     continuation.resume(throwing: error)
                 }
             }
         }
-    }
-
-    private func getPermission(_ options: [String]) -> CalendarPermission? {
-        for option in options {
-            if let permission = CalendarPermission.allCases.first(where: {
-                $0.rawValue.caseInsensitiveCompare(option) == .orderedSame
-            }) {
-                return permission
-            }
-        }
-
-        return nil
     }
 
     private func mapWriteStatus(_ status: EKAuthorizationStatus) -> PermissionStatus {
@@ -147,10 +132,5 @@ internal final class EventStore {
         @unknown default:
             return .denied
         }
-    }
-
-    private enum CalendarPermission: String, CaseIterable {
-        case write
-        case full
     }
 }

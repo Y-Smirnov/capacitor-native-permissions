@@ -1,4 +1,4 @@
-export type AuthorizationIosOptions =
+export type NotificationsAuthorizationOptionsIos =
   | 'alert'
   | 'badge'
   | 'sound'

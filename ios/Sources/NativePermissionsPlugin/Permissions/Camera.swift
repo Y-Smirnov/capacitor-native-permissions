@@ -9,31 +9,32 @@ internal final class Camera {
 
     internal func checkStatus() -> PermissionStatus {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
+
         switch status {
         case .authorized:
             return .granted
+
         case .notDetermined:
                 return .denied
+
         case .denied, .restricted:
                 return .permanentlyDenied
+
         @unknown default:
             return .denied
         }
     }
 
     internal func requestPermission() async -> PermissionStatus {
+        let status = checkStatus()
+
+        guard status != .granted || status != .permanentlyDenied else {
+            return status
+        }
+
         return await withCheckedContinuation { continuation in
-            switch AVCaptureDevice.authorizationStatus(for: .video) {
-            case .authorized:
-                continuation.resume(returning: .granted)
-            case .notDetermined:
-                AVCaptureDevice.requestAccess(for: .video) { granted in
-                    continuation.resume(returning: granted ?.granted : .denied)
-                }
-            case .denied, .restricted:
-                continuation.resume(returning: .permanentlyDenied)
-            @unknown default:
-                continuation.resume(returning: .denied)
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                continuation.resume(returning: granted ?.granted : .denied)
             }
         }
     }

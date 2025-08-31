@@ -34,10 +34,6 @@ public class NativePermissionsPlugin : Plugin() {
                             if (granted) {
                                 PermissionStatus.GRANTED
                             } else {
-                                val manifestValues =
-                                    request.manifestValues.firstOrNull()
-                                        ?: throw Exception("Activity result without permission manifest value")
-
                                 if (!request.shouldShowRationale &&
                                     !ActivityCompat.shouldShowRequestPermissionRationale(
                                         activity,
@@ -75,8 +71,7 @@ public class NativePermissionsPlugin : Plugin() {
                 return
             }
 
-        val options = getOptions(call)
-        val manifestValues = permission.manifestValues(options)
+        val manifestValues = permission.manifestValues(context)
 
         val granted =
             when (permission) {
@@ -85,10 +80,10 @@ public class NativePermissionsPlugin : Plugin() {
                 }
 
                 else ->
-                    manifestValues?.all { manifestValues ->
+                    manifestValues?.all { manifestPerm ->
                         ActivityCompat.checkSelfPermission(
                             activity,
-                            manifestValues,
+                            manifestPerm,
                         ) == PackageManager.PERMISSION_GRANTED
                     } ?: true
             }
@@ -109,9 +104,8 @@ public class NativePermissionsPlugin : Plugin() {
                 return
             }
 
-        val options = getOptions(call)
         val manifestPermissions =
-            permission.manifestValues(options) ?: run {
+            permission.manifestValues(context) ?: run {
                 call.resolve(JSObject().put("result", false))
                 return
             }
@@ -132,8 +126,7 @@ public class NativePermissionsPlugin : Plugin() {
                 return
             }
 
-        val options = getOptions(call)
-        val manifestValues = permission.manifestValues(options)
+        val manifestValues = permission.manifestValues(context)
 
         if (manifestValues.isNullOrEmpty()) {
             when (permission) {
@@ -180,7 +173,12 @@ public class NativePermissionsPlugin : Plugin() {
     private fun getPermission(call: PluginCall): AppPermission? {
         val permission = call.getString("permission") ?: return null
 
-        return AppPermission.entries.firstOrNull { it.name.equals(permission, ignoreCase = true) }
+        return when (permission) {
+            "locationForeground" -> AppPermission.LOCATION_FOREGROUND
+            "locationBackground" -> AppPermission.LOCATION_BACKGROUND
+
+            else -> AppPermission.entries.firstOrNull { it.name.equals(permission, ignoreCase = true) }
+        }
     }
 
     private fun getOptions(call: PluginCall): Array<String>? {
@@ -200,125 +198,159 @@ public class NativePermissionsPlugin : Plugin() {
             val shouldShowRationale: Boolean,
             val pluginCall: PluginCall,
         )
+    }
 
-        enum class AppPermission {
-            NOTIFICATIONS,
-            BLUETOOTH,
-            CALENDAR,
-            CAMERA,
-            CONTACTS,
-            MEDIA,
-            RECORD,
-            LOCATION,
-            ;
+    private enum class AppPermission {
+        NOTIFICATIONS,
+        BLUETOOTH,
+        CALENDAR,
+        CAMERA,
+        CONTACTS,
+        MEDIA,
+        RECORD,
+        LOCATION_FOREGROUND,
+        LOCATION_BACKGROUND,
+        ;
 
-            fun manifestValues(options: Array<String>? = null): List<String>? {
-                return when (this) {
-                    NOTIFICATIONS ->
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            listOf(Manifest.permission.POST_NOTIFICATIONS)
-                        } else {
-                            null
-                        }
+        fun manifestValues(pluginContext: android.content.Context): List<String>? {
+            val declared: (Array<out String>) -> List<String> = { perms ->
+                val pm = pluginContext.packageManager
+                val pkgName = pluginContext.packageName
 
-                    BLUETOOTH ->
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            val options = options ?: throw Exception("Missing bluetooth permission options")
-
-                            options.mapNotNull { opt ->
-                                when (opt.uppercase()) {
-                                    "SCAN" -> Manifest.permission.BLUETOOTH_SCAN
-                                    "ADVERTISE" -> Manifest.permission.BLUETOOTH_ADVERTISE
-                                    "CONNECT" -> Manifest.permission.BLUETOOTH_CONNECT
-                                    else -> null
-                                }
-                            }
-                        } else {
-                            null
-                        }
-
-                    CALENDAR -> {
-                        val options = options ?: throw Exception("Missing calendar permission options")
-
-                        val manifestValues =
-                            options.mapNotNull { opt ->
-                                when (opt.uppercase()) {
-                                    "READ" -> Manifest.permission.READ_CALENDAR
-                                    "WRITE" -> Manifest.permission.WRITE_CALENDAR
-                                    else -> null
-                                }
-                            }
-
-                        return if (!manifestValues.isEmpty()) manifestValues else null
+                val requested: Array<String>? =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        pm
+                            .getPackageInfo(
+                                pkgName,
+                                PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong()),
+                            ).requestedPermissions
+                    } else {
+                        @Suppress("DEPRECATION")
+                        pm.getPackageInfo(pkgName, PackageManager.GET_PERMISSIONS).requestedPermissions
                     }
 
-                    CAMERA -> listOf(Manifest.permission.CAMERA)
+                val set = requested?.toSet() ?: emptySet()
+                perms.filter { set.contains(it) }
+            }
 
-                    CONTACTS -> {
-                        val options = options ?: throw Exception("Missing contacts permission options")
+            return when (this) {
+                NOTIFICATIONS ->
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        val list = declared(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
 
-                        val manifestValues =
-                            options.mapNotNull { opt ->
-                                when (opt.uppercase()) {
-                                    "READ" -> Manifest.permission.READ_CONTACTS
-                                    "WRITE" -> Manifest.permission.WRITE_CONTACTS
-                                    else -> null
-                                }
-                            }
-
-                        return if (!manifestValues.isEmpty()) manifestValues else null
+                        list.ifEmpty { null }
+                    } else {
+                        null
                     }
 
-                    MEDIA ->
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                            listOf(
-                                Manifest.permission.READ_MEDIA_IMAGES,
-                                Manifest.permission.READ_MEDIA_VIDEO,
-                                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+                BLUETOOTH ->
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        val list =
+                            declared(
+                                arrayOf(
+                                    Manifest.permission.BLUETOOTH_SCAN,
+                                    Manifest.permission.BLUETOOTH_ADVERTISE,
+                                    Manifest.permission.BLUETOOTH_CONNECT,
+                                ),
                             )
-                        } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.TIRAMISU) {
-                            listOf(
-                                Manifest.permission.READ_MEDIA_IMAGES,
-                                Manifest.permission.READ_MEDIA_VIDEO,
+
+                        list.ifEmpty { null }
+                    } else {
+                        null
+                    }
+
+                CALENDAR -> {
+                    val list =
+                        declared(
+                            arrayOf(
+                                Manifest.permission.READ_CALENDAR,
+                                Manifest.permission.WRITE_CALENDAR,
+                            ),
+                        )
+
+                    list.ifEmpty { null }
+                }
+
+                CAMERA -> {
+                    val list = declared(arrayOf(Manifest.permission.CAMERA))
+                    list.ifEmpty { null }
+                }
+
+                CONTACTS -> {
+                    val list =
+                        declared(
+                            arrayOf(
+                                Manifest.permission.READ_CONTACTS,
+                                Manifest.permission.WRITE_CONTACTS,
+                            ),
+                        )
+
+                    list.ifEmpty { null }
+                }
+
+                MEDIA ->
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        val list =
+                            declared(
+                                arrayOf(
+                                    Manifest.permission.READ_MEDIA_IMAGES,
+                                    Manifest.permission.READ_MEDIA_VIDEO,
+                                    Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+                                ),
                             )
-                        } else {
-                            listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-                        }
 
-                    RECORD -> listOf(Manifest.permission.RECORD_AUDIO)
-                    LOCATION -> {
-                        val options = options ?: throw Exception("Missing location permission option")
+                        list.ifEmpty { null }
+                    } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.TIRAMISU) {
+                        val list =
+                            declared(
+                                arrayOf(
+                                    Manifest.permission.READ_MEDIA_IMAGES,
+                                    Manifest.permission.READ_MEDIA_VIDEO,
+                                ),
+                            )
 
-                        val manifestValues: List<String> =
-                            options.flatMap { opt ->
-                                when (opt.uppercase()) {
-                                    "FOREGROUND" ->
-                                        listOf(
-                                            Manifest.permission.ACCESS_COARSE_LOCATION,
-                                            Manifest.permission.ACCESS_FINE_LOCATION,
-                                        )
+                        list.ifEmpty { null }
+                    } else {
+                        val list = declared(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE))
+                        list.ifEmpty { null }
+                    }
 
-                                    "BACKGROUND" -> {
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                            listOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                                        } else {
-                                            listOf(
-                                                Manifest.permission.ACCESS_COARSE_LOCATION,
-                                                Manifest.permission.ACCESS_FINE_LOCATION,
-                                            )
-                                        }
-                                    }
+                RECORD -> {
+                    val list = declared(arrayOf(Manifest.permission.RECORD_AUDIO))
+                    list.ifEmpty { null }
+                }
 
-                                    else -> emptyList()
-                                }
-                            }
+                LOCATION_FOREGROUND -> {
+                    val list =
+                        declared(
+                            arrayOf(
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                            ),
+                        )
 
-                        return if (!manifestValues.isEmpty()) manifestValues else null
+                    list.ifEmpty { null }
+                }
+
+                LOCATION_BACKGROUND -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        val list = declared(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
+                        list.ifEmpty { null }
+                    } else {
+                        val list =
+                            declared(
+                                arrayOf(
+                                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                ),
+                            )
+
+                        list.ifEmpty { null }
                     }
                 }
             }
-
-            fun isSupported(): Boolean = manifestValues() != null
         }
+
+        fun AppPermission.isSupported(context: android.content.Context): Boolean = manifestValues(context) != null
     }
 }

@@ -49,12 +49,8 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     status = Bluetooth.instance.checkStatus()
 
                 case .calendar:
-                    guard let options = getOptions(call) else {
-                        call.reject("Missing authorization options.")
-                        return
-                    }
+                    status = EventStore.instance.checkCalendarStatus()
 
-                    status = try EventStore.instance.checkCalendarStatus(options)
                 case .reminders:
                     status = EventStore.instance.checkReminderStatus()
 
@@ -65,26 +61,19 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     status = Contacts.instance.checkStatus()
 
                 case .media:
-                    guard let options = getOptions(call) else {
-                        call.reject("Missing authorization options.")
-                        return
-                    }
+                    status = MediaLibrary.instance.checkStatus()
 
-                    status = try MediaLibrary.instance.checkStatus(options)
                 case .record:
                     status = Audio.instance.checkRecordPermission()
-                case .location:
-                    guard let options = getOptions(call) else {
-                        call.reject("Missing authorization options.")
-                        return
-                    }
 
-                    status = try await Location.instance.checkStatus(options)
+                case .locationForeground:
+                    status =  await Location.instance.checkForegroundStatus()
+
+                case .locationBackground:
+                    status = await Location.instance.checkBackgroundStatus()
                 }
 
                 call.resolve(["result": status.rawValue])
-            } catch {
-                call.reject("Unable to check \(permission.rawValue) permission.", error.localizedDescription)
             }
         }
     }
@@ -116,12 +105,8 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     status = await Bluetooth.instance.requestPermission()
 
                 case .calendar:
-                    guard let options = getOptions(call) else {
-                        call.reject("Missing calendar access option.")
-                        return
-                    }
+                    status = try await EventStore.instance.requestCalendarPermission()
 
-                    status = try await EventStore.instance.requestCalendarPermission(options)
                 case .reminders:
                     status = try await EventStore.instance.requestReminderPermission()
 
@@ -132,21 +117,16 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     status = try await Contacts.instance.requestPermisison()
 
                 case .media:
-                    guard let options = getOptions(call) else {
-                        call.reject("Missing authorization options.")
-                        return
-                    }
+                    status = await MediaLibrary.instance.requestPermisison()
 
-                    status = try await MediaLibrary.instance.requestPermisison(options)
                 case .record:
                     status = await Audio.instance.requestRecordPermission()
-                case .location:
-                    guard let options = getOptions(call) else {
-                        call.reject("Missing authorization options.")
-                        return
-                    }
 
-                    status = try await Location.instance.requestPermission(options)
+                case .locationForeground:
+                    status =  await Location.instance.requestForegroundPermission()
+
+                case .locationBackground:
+                    status = await Location.instance.requestBackgroundPermission()
                 }
 
                 call.resolve(["result": status.rawValue])
@@ -178,6 +158,7 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
         case contacts
         case media
         case record
-        case location
+        case locationForeground
+        case locationBackground
     }
 }

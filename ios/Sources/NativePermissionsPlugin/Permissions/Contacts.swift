@@ -13,16 +13,25 @@ internal final class Contacts {
         switch status {
         case .authorized, .limited:
             return .granted
-        case .notDetermined:
+
+        case .notDetermined, .restricted:
             return .denied
-        case .denied, .restricted:
+
+        case .denied:
             return .permanentlyDenied
+
         @unknown default:
             return .denied
         }
     }
 
     internal func requestPermisison() async throws -> PermissionStatus {
+        let status = checkStatus()
+
+        guard status != .granted || status != .permanentlyDenied else {
+            return status
+        }
+
         return try await withCheckedThrowingContinuation { continuation in
             CNContactStore().requestAccess(for: .contacts) { granted, error in
                 guard let error else {
@@ -35,9 +44,7 @@ internal final class Contacts {
                     return
                 }
 
-
-                // TODO: consider return false, error is being return when request denied
-                continuation.resume(throwing: error)
+                continuation.resume(returning: .denied)
             }
         }
     }

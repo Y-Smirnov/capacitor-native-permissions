@@ -1,11 +1,7 @@
-//
-//  Created by Yevhenii Smirnov on 30/08/2025.
-//
-
 import Capacitor
 import CoreLocation
 
-private let REQUESTED_BACKGROUND_LOCATION_KEY = "capacitor.native.permisisons.requested_location_background"
+private let REQUESTED_LOCATION_BACKGROUND_KEY = "capacitor.native.permisisons.requested_location_background"
 
 @MainActor
 internal final class Location: NSObject {
@@ -29,48 +25,49 @@ internal final class Location: NSObject {
         return CLLocationManager.authorizationStatus()
     }
 
-    internal func checkStatus(_ options: [String]) throws -> PermissionStatus {
-        guard let permission = getPermission(options) else {
-            throw NativePermissionsError.invalidPermissionOptions
-        }
-
-        return mapStatus(permission, authorizationStatus: authorizationStatus)
+    internal func checkForegroundStatus() -> PermissionStatus {
+        return mapStatus(.foreground, authorizationStatus: authorizationStatus)
     }
 
-    internal func requestPermission(_ options: [String]) async throws -> PermissionStatus {
-        let status = try checkStatus(options)
+    internal func checkBackgroundStatus() -> PermissionStatus {
+        return mapStatus(.background, authorizationStatus: authorizationStatus)
+    }
+
+    internal func requestForegroundPermission() async -> PermissionStatus {
+        let status = checkForegroundStatus()
 
         if status == .granted || status == .permanentlyDenied {
             return status
         }
 
-        guard let permission = getPermission(options) else {
-            throw NativePermissionsError.invalidPermissionOptions
-        }
+        return await withCheckedContinuation { continuation in
+            requestedPermissionContinuation = continuation
+            requestedPermission = .foreground
 
-        if (permission == .background) {
-            if (authorizationStatus == .notDetermined) {
-                throw NativePermissionsError.invalidRequestSequence(message: "Foreground (when in use) location permission should be requested before background (always) request.")
-            }
+            locationManager.requestWhenInUseAuthorization()
+        }
+    }
+
+    internal func requestBackgroundPermission() async -> PermissionStatus {
+        let status = checkBackgroundStatus()
+
+        if status == .granted || status == .permanentlyDenied {
+            return status
         }
 
         return await withCheckedContinuation { continuation in
             requestedPermissionContinuation = continuation
-            requestedPermission = permission
+            requestedPermission = .background
 
-            if permission == .foreground {
-                locationManager.requestWhenInUseAuthorization()
-            } else if permission == .background {
-                NotificationCenter.default.addObserver(
-                    self,
-                    selector: #selector(applicationDidBecomeActive),
-                    name: UIApplication.didBecomeActiveNotification,
-                    object: nil
-                )
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(applicationDidBecomeActive),
+                name: UIApplication.didBecomeActiveNotification,
+                object: nil
+            )
 
-                locationManager.requestAlwaysAuthorization()
-                UserDefaults.standard.set(true, forKey: REQUESTED_BACKGROUND_LOCATION_KEY)
-            }
+            locationManager.requestAlwaysAuthorization()
+            UserDefaults.standard.set(true, forKey: REQUESTED_LOCATION_BACKGROUND_KEY)
         }
     }
 
@@ -93,29 +90,15 @@ internal final class Location: NSObject {
         }
     }
 
-    private func getPermission(_ options: [String]) -> LocationPermission? {
-        for option in options {
-            if let permission = LocationPermission.allCases.first(where: {
-                $0.rawValue.caseInsensitiveCompare(option) == .orderedSame
-            }) {
-                return permission
-            }
-        }
-
-        return nil
-    }
-
     private func mapStatus(_ permission: LocationPermission, authorizationStatus: CLAuthorizationStatus) -> PermissionStatus {
         if permission == .background {
             switch authorizationStatus {
-            case .notDetermined:
-                return .denied
-            case .restricted:
+            case .notDetermined, .restricted:
                 return .denied
             case .denied:
                 return .permanentlyDenied
             case .authorizedWhenInUse:
-                return UserDefaults.standard.bool(forKey: REQUESTED_BACKGROUND_LOCATION_KEY) ? .permanentlyDenied : .denied
+                return UserDefaults.standard.bool(forKey: REQUESTED_LOCATION_BACKGROUND_KEY) ? .permanentlyDenied : .denied
             case .authorizedAlways:
                 return .granted
             @unknown default:
@@ -124,9 +107,7 @@ internal final class Location: NSObject {
         }
 
         switch authorizationStatus {
-        case .notDetermined:
-            return .denied
-        case .restricted:
+        case .notDetermined, .restricted:
             return .denied
         case .denied:
             return .permanentlyDenied
@@ -143,7 +124,7 @@ internal final class Location: NSObject {
     }
 }
 
-extension Location: CLLocationManagerDelegate {
+extension Location: @MainActor CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         handleAuthorizationChange(status)
     }
@@ -156,13 +137,13 @@ extension Location: CLLocationManagerDelegate {
     private func handleAuthorizationChange(_ authorizationStatus: CLAuthorizationStatus) {
         if authorizationStatus == .notDetermined {
             // When the user makes change in the Settings app.
-            UserDefaults.standard.removeObject(forKey: REQUESTED_BACKGROUND_LOCATION_KEY)
+            UserDefaults.standard.removeObject(forKey: REQUESTED_LOCATION_BACKGROUND_KEY)
         }
 
         guard let requestedPermission = requestedPermission, let requestedPermissionContinuation = requestedPermissionContinuation else {
             return
         }
-
+        
         let status = mapStatus(requestedPermission, authorizationStatus: authorizationStatus)
 
         // Treat 'Permanently Denied' as 'Denied' as this is result from request (applies only to 'When in Use' permission)
@@ -171,7 +152,6 @@ extension Location: CLLocationManagerDelegate {
         } else {
             requestedPermissionContinuation.resume(returning: status)
         }
-
 
         self.requestedPermission = nil
         self.requestedPermissionContinuation = nil

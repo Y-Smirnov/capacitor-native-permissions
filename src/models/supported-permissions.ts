@@ -8,5 +8,6 @@ export enum SupportedPermissions {
   Contacts = 'contacts',
   Media = 'media',
   Record = 'record',
-  Location = 'location',
+  LocationForeground = 'locationForeground',
+  LocationBackground = 'locationBackground',
 }
