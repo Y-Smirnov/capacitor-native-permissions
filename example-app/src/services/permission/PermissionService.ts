@@ -31,25 +31,25 @@ export const permissionRegistry: Record<SupportedPermissions, PermissionHandlers
 
   [SupportedPermissions.Bluetooth]: {
     check: async () => {
-      return await NativePermissions.checkBluetooth(['scan', 'connect', 'advertise']);
+      return await NativePermissions.checkBluetooth();
     },
     request: async () => {
-      return await NativePermissions.requestBluetooth(['scan', 'connect', 'advertise']);
+      return await NativePermissions.requestBluetooth();
     },
     shouldShowRationale: async () => {
-      return await NativePermissions.shouldShowBluetoothRationale(['scan', 'connect', 'advertise']);
+      return await NativePermissions.shouldShowBluetoothRationale();
     },
   },
 
   [SupportedPermissions.Calendar]: {
     check: async () => {
-      return await NativePermissions.checkCalendar(['read', 'write'], 'full');
+      return await NativePermissions.checkCalendar();
     },
     request: async () => {
-      return await NativePermissions.requestCalendar(['read', 'write'], 'full');
+      return await NativePermissions.requestCalendar();
     },
     shouldShowRationale: async () => {
-      return await NativePermissions.shouldShowCalendarRationale(['read', 'write']);
+      return await NativePermissions.shouldShowCalendarRationale();
     },
   },
 
@@ -76,22 +76,22 @@ export const permissionRegistry: Record<SupportedPermissions, PermissionHandlers
 
   [SupportedPermissions.Contacts]: {
     check: async () => {
-      return await NativePermissions.checkContacts(['read', 'write']);
+      return await NativePermissions.checkContacts();
     },
     request: async () => {
-      return await NativePermissions.requestContacts(['read', 'write']);
+      return await NativePermissions.requestContacts();
     },
     shouldShowRationale: async () => {
-      return await NativePermissions.shouldShowContactsRationale(['read', 'write']);
+      return await NativePermissions.shouldShowContactsRationale();
     },
   },
 
   [SupportedPermissions.Media]: {
     check: async () => {
-      return await NativePermissions.checkMedia('readWrite');
+      return await NativePermissions.checkMedia();
     },
     request: async () => {
-      return await NativePermissions.requestMedia('readWrite');
+      return await NativePermissions.requestMedia();
     },
     shouldShowRationale: async () => {
       return await NativePermissions.shouldShowMediaRationale();
@@ -110,15 +110,27 @@ export const permissionRegistry: Record<SupportedPermissions, PermissionHandlers
     },
   },
 
-  [SupportedPermissions.Location]: {
+  [SupportedPermissions.LocationForeground]: {
     check: async () => {
-      return await NativePermissions.checkLocation('foreground');
+      return await NativePermissions.checkLocationForeground();
     },
     request: async () => {
-      return await NativePermissions.requestLocation('foreground');
+      return await NativePermissions.requestLocationForeground();
     },
     shouldShowRationale: async () => {
-      return await NativePermissions.shouldShowLocationRationale('foreground');
+      return await NativePermissions.shouldShowLocationForegroundRationale();
+    },
+  },
+
+  [SupportedPermissions.LocationBackground]: {
+    check: async () => {
+      return await NativePermissions.checkLocationBackground();
+    },
+    request: async () => {
+      return await NativePermissions.requestLocationBackground();
+    },
+    shouldShowRationale: async () => {
+      return await NativePermissions.shouldShowLocationBackgroundRationale();
     },
   },
 };

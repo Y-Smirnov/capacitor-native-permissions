@@ -38,7 +38,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Use this field to describe usage reason.</string>
 	<key>NSContactsUsageDescription</key>
-	<string>Use this field to describe usage reason.\</string>
+	<string>Use this field to describe usage reason.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Use this field to describe usage reason.\</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
