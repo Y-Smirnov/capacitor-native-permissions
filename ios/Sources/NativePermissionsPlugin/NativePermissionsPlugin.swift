@@ -8,24 +8,14 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "NativePermissionsPlugin"
     public let jsName = "NativePermissionsPlugin"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "echo", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "check", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "request", returnType: CAPPluginReturnPromise),
     ]
-
-    private let implementation = NativePermissions()
 
     public override func load() {
         Task { @MainActor in
             _ = Location.instance
         }
-    }
-
-    @objc func echo(_ call: CAPPluginCall) {
-        let value = call.getString("value") ?? ""
-        call.resolve([
-            "value": implementation.echo(value)
-        ])
     }
 
     @objc func check(_ call: CAPPluginCall) {

@@ -9,8 +9,6 @@ export const NativePlugin = registerPlugin<NativePermissionsPlugin>('NativePermi
 });
 
 export interface NativePermissionsPlugin {
-  echo(options: { value: string }): Promise<{ value: string }>;
-
   check(options: { permission: SupportedPermissions }): Promise<{ result: PermissionStatus }>;
 
   shouldShowRationale(options: { permission: SupportedPermissions }): Promise<{ result: boolean }>;

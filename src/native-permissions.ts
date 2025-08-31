@@ -6,10 +6,6 @@ import { SupportedPermissions } from './models/supported-permissions';
 import { NativePlugin } from './plugin';
 
 export class NativePermissions {
-  public static async echo(options: { value: string }): Promise<{ value: string }> {
-    return await NativePlugin.echo(options);
-  }
-
   // Notifications
 
   public static async checkNotifications(): Promise<PermissionStatus> {

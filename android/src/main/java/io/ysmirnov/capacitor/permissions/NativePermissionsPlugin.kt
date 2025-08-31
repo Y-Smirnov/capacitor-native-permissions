@@ -54,16 +54,6 @@ public class NativePermissionsPlugin : Plugin() {
     }
 
     @PluginMethod
-    public fun echo(call: PluginCall) {
-        val value = call.getString("value")
-        Log.i("Echo", value!!)
-
-        val ret = JSObject()
-        ret.put("value", value)
-        call.resolve(ret)
-    }
-
-    @PluginMethod
     public fun check(call: PluginCall) {
         val permission =
             getPermission(call) ?: run {
