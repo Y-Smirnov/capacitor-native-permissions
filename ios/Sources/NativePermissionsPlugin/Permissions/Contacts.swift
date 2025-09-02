@@ -2,6 +2,8 @@
 //  Created by Yevhenii Smirnov on 27/08/2025.
 //
 
+#if PERMISSION_CONTACTS
+
 import Contacts
 
 internal final class Contacts {
@@ -49,3 +51,5 @@ internal final class Contacts {
         }
     }
 }
+
+#endif

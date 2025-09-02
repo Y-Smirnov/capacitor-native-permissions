@@ -1,3 +1,9 @@
+//
+//  Created by Yevhenii Smirnov
+//
+
+#if PERMISSION_MEDIA
+
 import Foundation
 import Photos
 
@@ -49,3 +55,5 @@ internal final class MediaLibrary: Sendable {
         }
     }
 }
+
+#endif

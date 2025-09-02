@@ -2,6 +2,8 @@
 //  Created by Yevhenii Smirnov
 //
 
+#if PERMISSION_NOTIFICATIONS
+
 internal struct Notifications {
     internal static let instance = Notifications()
 
@@ -95,3 +97,5 @@ internal struct Notifications {
         return authorizationOptions
     }
 }
+
+#endif

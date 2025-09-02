@@ -2,6 +2,8 @@
 //  Created by Yevhenii Smirnov on 20/08/2025.
 //
 
+#if PERMISSION_BLUETOOTH
+
 import CoreBluetooth
 
 internal final class Bluetooth: NSObject, CBCentralManagerDelegate {
@@ -60,3 +62,5 @@ internal final class Bluetooth: NSObject, CBCentralManagerDelegate {
         self.continuation = nil
     }
 }
+
+#endif

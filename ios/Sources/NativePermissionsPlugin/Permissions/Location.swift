@@ -1,3 +1,9 @@
+//
+//  Created by Yevhenii Smirnov on 24/08/2025.
+//
+
+#if PERMISSION_LOCATION_FOREGROUND
+
 import Capacitor
 import CoreLocation
 
@@ -29,10 +35,6 @@ internal final class Location: NSObject {
         return mapStatus(.foreground, authorizationStatus: authorizationStatus)
     }
 
-    internal func checkBackgroundStatus() -> PermissionStatus {
-        return mapStatus(.background, authorizationStatus: authorizationStatus)
-    }
-
     internal func requestForegroundPermission() async -> PermissionStatus {
         let status = checkForegroundStatus()
 
@@ -46,6 +48,12 @@ internal final class Location: NSObject {
 
             locationManager.requestWhenInUseAuthorization()
         }
+    }
+
+#if PERMISSION_LOCATION_BACKGROUND
+
+    internal func checkBackgroundStatus() -> PermissionStatus {
+        return mapStatus(.background, authorizationStatus: authorizationStatus)
     }
 
     internal func requestBackgroundPermission() async -> PermissionStatus {
@@ -90,6 +98,8 @@ internal final class Location: NSObject {
         }
     }
 
+#endif
+
     private func mapStatus(_ permission: LocationPermission, authorizationStatus: CLAuthorizationStatus) -> PermissionStatus {
         if permission == .background {
             switch authorizationStatus {
@@ -124,7 +134,7 @@ internal final class Location: NSObject {
     }
 }
 
-extension Location: @MainActor CLLocationManagerDelegate {
+extension Location: @preconcurrency CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         handleAuthorizationChange(status)
     }
@@ -157,3 +167,5 @@ extension Location: @MainActor CLLocationManagerDelegate {
         self.requestedPermissionContinuation = nil
     }
 }
+
+#endif

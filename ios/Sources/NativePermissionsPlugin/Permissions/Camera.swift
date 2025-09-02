@@ -2,6 +2,8 @@
 //  Created by Yevhenii Smirnov on 27/08/2025.
 //
 
+#if PERMISSION_CAMERA
+
 import AVFoundation
 
 internal final class Camera {
@@ -39,3 +41,5 @@ internal final class Camera {
         }
     }
 }
+
+#endif

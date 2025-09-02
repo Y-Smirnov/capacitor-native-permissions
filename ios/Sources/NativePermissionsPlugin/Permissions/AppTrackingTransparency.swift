@@ -2,6 +2,8 @@
 //  Created by Yevhenii Smirnov
 //
 
+#if PERMISSION_APP_TRACKING_TRANSPARENCY
+
 import AppTrackingTransparency
 
 internal struct AppTrackingTransparency {
@@ -39,3 +41,5 @@ internal struct AppTrackingTransparency {
         return .granted
     }
 }
+
+#endif
