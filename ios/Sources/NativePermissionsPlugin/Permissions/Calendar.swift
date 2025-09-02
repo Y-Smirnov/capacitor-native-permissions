@@ -2,12 +2,14 @@
 //  Created by Yevhenii Smirnov on 24/08/2025.
 //
 
+#if PERMISSION_CALENDAR
+
 import Capacitor
 import EventKit
 import Foundation
 
-internal final class EventStore {
-    internal static let instance = EventStore()
+internal final class Calendar {
+    internal static let instance = Calendar()
 
     private let store = EKEventStore()
 
@@ -24,7 +26,7 @@ internal final class EventStore {
         return .write
     }
 
-    internal func checkCalendarStatus() -> PermissionStatus {
+    internal func checkStatus() -> PermissionStatus {
         switch calendarAccessLevel {
         case .write:
             let status = EKEventStore.authorizationStatus(for: .event)
@@ -36,13 +38,8 @@ internal final class EventStore {
         }
     }
 
-    internal func checkReminderStatus() -> PermissionStatus {
-        let status = EKEventStore.authorizationStatus(for: .reminder)
-        return mapFullAccessStatus(status)
-    }
-
-    internal func requestCalendarPermission() async throws -> PermissionStatus {
-        let status = checkCalendarStatus()
+    internal func requestPermission() async throws -> PermissionStatus {
+        let status = checkStatus()
 
         guard status != .granted || status != .permanentlyDenied else {
             return status
@@ -83,29 +80,6 @@ internal final class EventStore {
         }
     }
 
-    internal func requestReminderPermission() async throws -> PermissionStatus {
-        let status = checkReminderStatus()
-
-        guard status != .granted || status != .permanentlyDenied else {
-            return status
-        }
-
-        if #available(iOS 17.0, *) {
-            let granted = try await store.requestFullAccessToReminders()
-            return granted ? .granted : .permanentlyDenied
-        } else {
-            return try await withCheckedThrowingContinuation { continuation in
-                store.requestAccess(to: .reminder) { granted, error in
-                    guard let error else {
-                        continuation.resume(returning: granted ? .granted : .permanentlyDenied)
-                        return
-                    }
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
-    }
-
     private func mapWriteStatus(_ status: EKAuthorizationStatus) -> PermissionStatus {
         switch status {
         case .authorized, .fullAccess, .writeOnly:
@@ -134,3 +108,5 @@ internal final class EventStore {
         }
     }
 }
+
+#endif
