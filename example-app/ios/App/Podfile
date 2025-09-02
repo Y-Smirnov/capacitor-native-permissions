@@ -25,4 +25,27 @@ end
 
 post_install do |installer|
   assertDeploymentTarget(installer)
+
+  installer.pods_project.targets.each do |target|
+    next unless target.name == 'CapacitorNativePermissions'
+
+    target.build_configurations.each do |config|
+      enabled_flags = [
+        'PERMISSION_NOTIFICATIONS',
+        'PERMISSION_APP_TRACKING_TRANSPARENCY',
+        'PERMISSION_BLUETOOTH',
+        'PERMISSION_CALENDAR',
+        'PERMISSION_REMINDERS',
+        'PERMISSION_CAMERA',
+#         'PERMISSION_CONTACTS',
+        'PERMISSION_MEDIA',
+        'PERMISSION_RECORD',
+        'PERMISSION_LOCATION_FOREGROUND',
+        'PERMISSION_LOCATION_BACKGROUND',
+      ]
+
+      current_swift_flags = config.build_settings['OTHER_SWIFT_FLAGS'] || '$(inherited)'
+      config.build_settings['OTHER_SWIFT_FLAGS'] = [current_swift_flags, *enabled_flags.map { |f| "-D#{f}" }].join(' ')
+    end
+  end
 end
