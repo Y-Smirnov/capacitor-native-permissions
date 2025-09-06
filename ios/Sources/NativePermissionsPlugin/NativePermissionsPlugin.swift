@@ -3,6 +3,9 @@ import Capacitor
 
 @objc(NativePermissionsPlugin)
 public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
+    private var settingsCall: CAPPluginCall?
+    private var settingsObserver: NSObjectProtocol?
+
     private let notificationCenter = UNUserNotificationCenter.current()
 
     public let identifier = "NativePermissionsPlugin"
@@ -10,6 +13,7 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "check", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "request", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "openAppSettings", returnType: CAPPluginReturnPromise),
     ]
 
 #if PERMISSION_LOCATION_FOREGROUND
@@ -176,6 +180,34 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
             } catch {
                 call.reject("Unable to request \(permission.rawValue) permission.", error.localizedDescription)
             }
+        }
+    }
+
+    @objc func openAppSettings(_ call: CAPPluginCall) {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else {
+            call.reject("Unable to create settings URL")
+            return
+        }
+
+        settingsCall = call
+
+        settingsObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            guard let self = self, let savedCall = self.settingsCall else { return }
+            savedCall.resolve()
+            self.settingsCall = nil
+
+            if let observer = self.settingsObserver {
+                NotificationCenter.default.removeObserver(observer)
+                self.settingsObserver = nil
+            }
+        }
+
+        DispatchQueue.main.async {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
         }
     }
 

@@ -28,6 +28,10 @@ export class NativePermissions {
     return true;
   }
 
+  public static async openAppSettings(): Promise<void> {
+    await NativePlugin.openAppSettings();
+  }
+
   // Notifications
 
   public static async checkNotifications(): Promise<PermissionStatus> {

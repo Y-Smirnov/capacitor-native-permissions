@@ -32,4 +32,8 @@ export class NativePermissionsWeb extends WebPlugin implements NativePermissions
   }): Promise<{ result: PermissionStatus }> {
     throw new Error('Method not implemented.');
   }
+
+  openAppSettings(): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
 }

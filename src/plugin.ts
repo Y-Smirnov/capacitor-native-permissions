@@ -20,4 +20,6 @@ export interface NativePermissionsPlugin {
   }): Promise<{ result: boolean }>;
 
   request(options: { permission: SupportedPermissions; options?: string[] }): Promise<{ result: PermissionStatus }>;
+
+  openAppSettings(): Promise<void>;
 }

@@ -1,9 +1,11 @@
 package io.ysmirnov.capacitor.permissions
 
 import android.Manifest
-import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -18,6 +20,7 @@ import io.ysmirnov.capacitor.permissions.models.PermissionStatus
 
 @CapacitorPlugin(name = "NativePermissionsPlugin")
 public class NativePermissionsPlugin : Plugin() {
+    private var settingsCallId: String? = null
     private var currentRequest: CurrentRequest? = null
     private lateinit var permissionsLauncher: ActivityResultLauncher<Array<String>>
 
@@ -52,6 +55,21 @@ public class NativePermissionsPlugin : Plugin() {
 
                 currentRequest = null
             }
+    }
+
+    override fun handleOnResume() {
+        super.handleOnResume()
+
+        settingsCallId?.let { id ->
+            val call = bridge.getSavedCall(id)
+
+            if (call != null) {
+                call.resolve()
+                bridge.releaseCall(call)
+            }
+
+            settingsCallId = null
+        }
     }
 
     @PluginMethod
@@ -196,6 +214,20 @@ public class NativePermissionsPlugin : Plugin() {
             )
 
         permissionsLauncher.launch(manifestValues.toTypedArray())
+    }
+
+    @PluginMethod
+    public fun openAppSettings(call: PluginCall) {
+        val intent =
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", context.packageName, null)
+            }
+
+        // Save call so we can resolve later
+        bridge.saveCall(call)
+        settingsCallId = call.callbackId
+
+        activity.startActivity(intent)
     }
 
     private fun getPermission(call: PluginCall): AppPermission? {
