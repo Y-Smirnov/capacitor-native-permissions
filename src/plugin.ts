@@ -1,6 +1,5 @@
 import { registerPlugin } from '@capacitor/core';
 
-// import type { AuthorizationIosOptions } from './models/permission-notifications';
 import type { PermissionStatus } from './models/permission-status';
 import type { SupportedPermissions } from './models/supported-permissions';
 
@@ -12,6 +11,13 @@ export interface NativePermissionsPlugin {
   check(options: { permission: SupportedPermissions }): Promise<{ result: PermissionStatus }>;
 
   shouldShowRationale(options: { permission: SupportedPermissions }): Promise<{ result: boolean }>;
+
+  showRationale(options: {
+    title: string;
+    message: string;
+    positiveButton?: string;
+    negativeButton?: string;
+  }): Promise<{ result: boolean }>;
 
   request(options: { permission: SupportedPermissions; options?: string[] }): Promise<{ result: PermissionStatus }>;
 }

@@ -16,6 +16,16 @@ export class NativePermissionsWeb extends WebPlugin implements NativePermissions
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  showRationale(_options: {
+    title: string;
+    message: string;
+    positiveButton?: string;
+    negativeButton?: string;
+  }): Promise<{ result: boolean }> {
+    return Promise.resolve({ result: false });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   request(_options: {
     permission: SupportedPermissions;
     options?: string[] | undefined;

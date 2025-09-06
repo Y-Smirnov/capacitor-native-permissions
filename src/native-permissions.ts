@@ -6,6 +6,28 @@ import { SupportedPermissions } from './models/supported-permissions';
 import { NativePlugin } from './plugin';
 
 export class NativePermissions {
+  // Common
+
+  public static async showRationale(
+    title: string,
+    message: string,
+    positiveButton?: string,
+    negativeButton?: string,
+  ): Promise<boolean> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.showRationale({
+        title: title,
+        message: message,
+        positiveButton: positiveButton,
+        negativeButton: negativeButton,
+      });
+
+      return result;
+    }
+
+    return true;
+  }
+
   // Notifications
 
   public static async checkNotifications(): Promise<PermissionStatus> {

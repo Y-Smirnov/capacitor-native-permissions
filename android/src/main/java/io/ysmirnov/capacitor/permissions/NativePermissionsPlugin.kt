@@ -1,11 +1,12 @@
 package io.ysmirnov.capacitor.permissions
 
 import android.Manifest
+import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import com.getcapacitor.JSObject
@@ -109,6 +110,43 @@ public class NativePermissionsPlugin : Plugin() {
     }
 
     @PluginMethod
+    public fun showRationale(call: PluginCall) {
+        val title = call.getString("title")
+        val message = call.getString("message")
+
+        if (title == null || message == null) {
+            call.reject("Title and message are required.")
+            return
+        }
+
+        val positiveButton = call.getString("positiveButton") ?: "OK"
+        val negativeButton = call.getString("negativeButton")
+
+        activity.runOnUiThread {
+            val builder =
+                AlertDialog
+                    .Builder(context)
+                    .setTitle(title)
+                    .setMessage(message)
+                    .setCancelable(false)
+
+            builder.setPositiveButton(positiveButton) { dialog, _ ->
+                dialog.dismiss()
+                call.resolve(JSObject().put("result", true))
+            }
+
+            if (negativeButton != null) {
+                builder.setNegativeButton(negativeButton) { dialog, _ ->
+                    dialog.dismiss()
+                    call.resolve(JSObject().put("result", false))
+                }
+            }
+
+            builder.show()
+        }
+    }
+
+    @PluginMethod
     public fun request(call: PluginCall) {
         val permission =
             getPermission(call) ?: run {
@@ -169,17 +207,6 @@ public class NativePermissionsPlugin : Plugin() {
 
             else -> AppPermission.entries.firstOrNull { it.name.equals(permission, ignoreCase = true) }
         }
-    }
-
-    private fun getOptions(call: PluginCall): Array<String>? {
-        val jsArray = call.getArray("options") ?: return null
-        val list = mutableListOf<String>()
-
-        for (i in 0 until jsArray.length()) {
-            list.add(jsArray.optString(i))
-        }
-
-        return list.toTypedArray()
     }
 
     private companion object {
