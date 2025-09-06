@@ -1,5 +1,5 @@
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast } from '@ionic/react';
-import { SupportedPermissions } from 'capacitor-native-permissions';
+import { NativePermissions, SupportedPermissions } from 'capacitor-native-permissions';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import '../theme/home.css';
@@ -69,6 +69,39 @@ const Home: React.FC = () => {
     [exec],
   );
 
+  // NEW: Common items that directly use plugin helpers
+  const commonItems = useMemo<Item[]>(
+    () => [
+      {
+        label: 'Show rationale dialog',
+        onClick: () =>
+          exec(
+            () =>
+              NativePermissions.showRationale(
+                'Permission required',
+                'We need this permission to proceed.',
+                'OK',
+                'Cancel',
+              ),
+            (result) => `Rationale result: ${String(result)}`,
+            'Failed to show rationale.',
+          ),
+      },
+      {
+        label: 'Open app settings',
+        onClick: () =>
+          exec(
+            async () => {
+              // await NativePermissions.openAppSettings();
+            },
+            () => 'Returned from app settings.',
+            'Failed to open app settings.',
+          ),
+      },
+    ],
+    [exec],
+  );
+
   const notificationItems = useMemo(() => buildItems(SupportedPermissions.Notifications), [buildItems]);
   const appTrackingTransparency = useMemo(() => buildItems(SupportedPermissions.AppTrackingTransparency), [buildItems]);
   const bluetoothItems = useMemo(() => buildItems(SupportedPermissions.Bluetooth), [buildItems]);
@@ -96,6 +129,8 @@ const Home: React.FC = () => {
         </IonHeader>
 
         <div className="permissions-content">
+          <PermissionSection title="Common" items={commonItems} />
+
           <PermissionSection title="Notifications" items={notificationItems} />
           <PermissionSection title="App Tracking Transparency" items={appTrackingTransparency} />
           <PermissionSection title="Bluetooth" items={bluetoothItems} />
