@@ -1,0 +1,51 @@
+require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
+
+platform :ios, '14.0'
+use_frameworks!
+
+# workaround to avoid Xcode caching of Pods that requires
+# Product -> Clean Build Folder after new Cordova plugins installed
+# Requires CocoaPods 1.6 or newer
+install! 'cocoapods', :disable_input_output_paths => true
+
+def capacitor_pods
+  pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorApp', :path => '../../node_modules/@capacitor/app'
+  pod 'CapacitorHaptics', :path => '../../node_modules/@capacitor/haptics'
+  pod 'CapacitorKeyboard', :path => '../../node_modules/@capacitor/keyboard'
+  pod 'CapacitorStatusBar', :path => '../../node_modules/@capacitor/status-bar'
+  pod 'CapacitorNativePermissions', :path => '../../..'
+end
+
+target 'App' do
+  capacitor_pods
+  # Add your Pods here
+end
+
+post_install do |installer|
+  assertDeploymentTarget(installer)
+
+  installer.pods_project.targets.each do |target|
+    next unless target.name == 'CapacitorNativePermissions'
+
+    target.build_configurations.each do |config|
+      enabled_flags = [
+        'PERMISSION_NOTIFICATIONS',
+        'PERMISSION_APP_TRACKING_TRANSPARENCY',
+        'PERMISSION_BLUETOOTH',
+        'PERMISSION_CALENDAR',
+        'PERMISSION_REMINDERS',
+        'PERMISSION_CAMERA',
+#         'PERMISSION_CONTACTS',
+        'PERMISSION_MEDIA',
+        'PERMISSION_RECORD',
+        'PERMISSION_LOCATION_FOREGROUND',
+        'PERMISSION_LOCATION_BACKGROUND',
+      ]
+
+      current_swift_flags = config.build_settings['OTHER_SWIFT_FLAGS'] || '$(inherited)'
+      config.build_settings['OTHER_SWIFT_FLAGS'] = [current_swift_flags, *enabled_flags.map { |f| "-D#{f}" }].join(' ')
+    end
+  end
+end
