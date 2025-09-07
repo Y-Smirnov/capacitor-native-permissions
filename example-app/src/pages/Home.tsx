@@ -88,11 +88,22 @@ const Home: React.FC = () => {
           ),
       },
       {
-        label: 'Open app settings',
+        label: 'Open app settings (no wait)',
         onClick: () =>
           exec(
             async () => {
-              await NativePermissions.openAppSettings();
+              await NativePermissions.openAppSettings(false);
+            },
+            () => 'Returned from app settings.',
+            'Failed to open app settings.',
+          ),
+      },
+      {
+        label: 'Open app settings (wait)',
+        onClick: () =>
+          exec(
+            async () => {
+              await NativePermissions.openAppSettings(true);
             },
             () => 'Returned from app settings.',
             'Failed to open app settings.',
