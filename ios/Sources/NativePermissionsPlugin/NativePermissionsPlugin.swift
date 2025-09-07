@@ -13,6 +13,7 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "check", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "request", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "openAppSettings", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "showRationale", returnType: CAPPluginReturnPromise),
     ]
 
 #if PERMISSION_LOCATION_FOREGROUND
@@ -178,6 +179,37 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                 call.resolve(["result": status.rawValue])
             } catch {
                 call.reject("Unable to request \(permission.rawValue) permission.", error.localizedDescription)
+            }
+        }
+    }
+
+    @objc func showRationale(_ call: CAPPluginCall) {
+        guard let title = call.getString("title"),
+              let message = call.getString("message") else {
+            call.reject("Title and message are required.")
+            return
+        }
+
+        let positiveButton = call.getString("positiveButton") ?? "OK"
+        let negativeButton = call.getString("negativeButton")
+
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+
+            alert.addAction(UIAlertAction(title: positiveButton, style: .default, handler: { _ in
+                call.resolve(["result": true])
+            }))
+
+            if let negative = negativeButton {
+                alert.addAction(UIAlertAction(title: negative, style: .cancel, handler: { _ in
+                    call.resolve(["result": false])
+                }))
+            }
+
+            if let vc = self.bridge?.viewController {
+                vc.present(alert, animated: true, completion: nil)
+            } else {
+                call.reject("Cannot get view controller to present alert")
             }
         }
     }
