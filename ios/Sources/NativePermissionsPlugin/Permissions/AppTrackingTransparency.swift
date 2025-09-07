@@ -35,7 +35,7 @@ internal struct AppTrackingTransparency {
         let request = await ATTrackingManager.requestTrackingAuthorization()
 
         guard request == .authorized else {
-            return .permanentlyDenied
+            return .denied
         }
         
         return .granted

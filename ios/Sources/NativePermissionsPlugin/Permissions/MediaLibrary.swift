@@ -26,7 +26,7 @@ internal final class MediaLibrary: Sendable {
     internal func requestPermisison() async -> PermissionStatus {
         let status = checkStatus()
 
-        if status == .granted || status == .permanentlyDenied {
+        guard status != .granted && status != .permanentlyDenied else {
             return status
         }
 
@@ -34,7 +34,9 @@ internal final class MediaLibrary: Sendable {
 
         return await withCheckedContinuation { continuation in
             PHPhotoLibrary.requestAuthorization(for: accessLevel) { status in
-                continuation.resume(returning: self.mapStatus(status))
+                let mappedStatus = self.mapStatus(status)
+
+                continuation.resume(returning: mappedStatus == .permanentlyDenied ? .denied : mappedStatus)
             }
         }
     }

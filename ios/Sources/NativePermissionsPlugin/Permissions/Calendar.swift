@@ -41,7 +41,7 @@ internal final class Calendar {
     internal func requestPermission() async throws -> PermissionStatus {
         let status = checkStatus()
 
-        guard status != .granted || status != .permanentlyDenied else {
+        guard status != .granted && status != .permanentlyDenied else {
             return status
         }
 
@@ -49,12 +49,12 @@ internal final class Calendar {
         case .write:
             if #available(iOS 17.0, *) {
                 let granted = try await store.requestWriteOnlyAccessToEvents()
-                return granted ? .granted : .permanentlyDenied
+                return granted ? .granted : .denied
             } else {
                 return try await withCheckedThrowingContinuation { continuation in
                     store.requestAccess(to: .event) { granted, error in
                         guard let error else {
-                            continuation.resume(returning: granted ? .granted : .permanentlyDenied)
+                            continuation.resume(returning: granted ? .granted : .denied)
                             return
                         }
                         continuation.resume(throwing: error)
@@ -65,12 +65,12 @@ internal final class Calendar {
         case .full:
             if #available(iOS 17.0, *) {
                 let granted = try await store.requestFullAccessToEvents()
-                return granted ? .granted : .permanentlyDenied
+                return granted ? .granted : .denied
             } else {
                 return try await withCheckedThrowingContinuation { continuation in
                     store.requestAccess(to: .event) { granted, error in
                         guard let error else {
-                            continuation.resume(returning: granted ? .granted : .permanentlyDenied)
+                            continuation.resume(returning: granted ? .granted : .denied)
                             return
                         }
                         continuation.resume(throwing: error)

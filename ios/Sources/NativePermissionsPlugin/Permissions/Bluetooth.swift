@@ -34,7 +34,7 @@ internal final class Bluetooth: NSObject, CBCentralManagerDelegate {
     internal func requestPermission() async -> PermissionStatus {
         let status = checkStatus()
 
-        if status == .granted || status == .permanentlyDenied {
+        guard status != .granted && status != .permanentlyDenied else {
             return status
         }
 

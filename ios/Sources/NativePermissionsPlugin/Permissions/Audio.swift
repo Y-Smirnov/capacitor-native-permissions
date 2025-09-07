@@ -23,6 +23,12 @@ internal final class Audio {
     }
 
     internal func requestRecordPermission() async -> PermissionStatus {
+        let status = checkRecordPermission()
+
+        guard status != .granted && status != .permanentlyDenied else {
+            return status
+        }
+
         return await withCheckedContinuation { continuation in
             AVAudioSession.sharedInstance().requestRecordPermission { granted in
                 if granted {

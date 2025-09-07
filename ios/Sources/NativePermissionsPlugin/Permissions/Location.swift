@@ -38,7 +38,7 @@ internal final class Location: NSObject {
     internal func requestForegroundPermission() async -> PermissionStatus {
         let status = checkForegroundStatus()
 
-        if status == .granted || status == .permanentlyDenied {
+        guard status != .granted && status != .permanentlyDenied else {
             return status
         }
 
@@ -59,7 +59,7 @@ internal final class Location: NSObject {
     internal func requestBackgroundPermission() async -> PermissionStatus {
         let status = checkBackgroundStatus()
 
-        if status == .granted || status == .permanentlyDenied {
+        guard status != .granted && status != .permanentlyDenied else {
             return status
         }
 

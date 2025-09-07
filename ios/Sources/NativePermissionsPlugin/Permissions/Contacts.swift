@@ -30,7 +30,7 @@ internal final class Contacts {
     internal func requestPermisison() async throws -> PermissionStatus {
         let status = checkStatus()
 
-        guard status != .granted || status != .permanentlyDenied else {
+        guard status != .granted && status != .permanentlyDenied else {
             return status
         }
 

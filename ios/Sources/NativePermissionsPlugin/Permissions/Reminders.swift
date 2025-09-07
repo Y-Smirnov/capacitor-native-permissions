@@ -21,18 +21,18 @@ internal final class Reminders {
     internal func requestPermission() async throws -> PermissionStatus {
         let status = checkStatus()
 
-        guard status != .granted || status != .permanentlyDenied else {
+        guard status != .granted && status != .permanentlyDenied else {
             return status
         }
 
         if #available(iOS 17.0, *) {
             let granted = try await store.requestFullAccessToReminders()
-            return granted ? .granted : .permanentlyDenied
+            return granted ? .granted : .denied
         } else {
             return try await withCheckedThrowingContinuation { continuation in
                 store.requestAccess(to: .reminder) { granted, error in
                     guard let error else {
-                        continuation.resume(returning: granted ? .granted : .permanentlyDenied)
+                        continuation.resume(returning: granted ? .granted : .denied)
                         return
                     }
                     continuation.resume(throwing: error)

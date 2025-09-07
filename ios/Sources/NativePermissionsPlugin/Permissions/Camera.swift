@@ -30,7 +30,7 @@ internal final class Camera {
     internal func requestPermission() async -> PermissionStatus {
         let status = checkStatus()
 
-        guard status != .granted || status != .permanentlyDenied else {
+        guard status != .granted && status != .permanentlyDenied else {
             return status
         }
 
