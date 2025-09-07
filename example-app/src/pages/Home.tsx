@@ -115,58 +115,58 @@ const Home: React.FC = () => {
   const usageExamplesItems = useMemo<Item[]>(
     () => [
       {
-        label: 'Basic calendar flow',
+        label: 'Basic notifications flow',
         onClick: () =>
           exec(
-            () => ensureCalendarPermissionBasic(),
+            () => ensureNotificationsPermissionBasic(),
             (result) => `Permission granted: ${String(result)}`,
-            'Basic calendar flow failed.',
+            'Basic notifications flow failed.',
           ),
       },
       {
-        label: 'Advanced calendar flow',
+        label: 'Advanced notifications flow',
         onClick: () =>
           exec(
-            () => ensureCalendarPermissionAdvanced(),
+            () => ensureNotificationsPermissionAdvanced(),
             (result) => `Permission granted: ${String(result)}`,
-            'Advanced calendar flow failed.',
+            'Advanced notifications flow failed.',
           ),
       },
     ],
     [exec],
   );
 
-  async function ensureCalendarPermissionBasic(): Promise<boolean> {
-    const status = await NativePermissions.checkCalendar();
+  async function ensureNotificationsPermissionBasic(): Promise<boolean> {
+    const status = await NativePermissions.checkNotifications();
 
     if (status === PermissionStatus.GRANTED) return true;
 
-    if (await NativePermissions.shouldShowCalendarRationale()) {
+    if (await NativePermissions.shouldShowNotificationsRationale()) {
       await NativePermissions.showRationale(
         'Permission required',
-        'We need this permission to access your calendar.',
+        'Allow notifications in order to receive relevant updates.',
         'Continue',
       );
     }
 
-    const result = await NativePermissions.requestCalendar();
+    const result = await NativePermissions.requestNotifications();
     return result === PermissionStatus.GRANTED;
   }
 
-  async function ensureCalendarPermissionAdvanced(): Promise<boolean> {
-    const status = await NativePermissions.checkCalendar();
+  async function ensureNotificationsPermissionAdvanced(): Promise<boolean> {
+    const status = await NativePermissions.checkNotifications();
 
     if (status === PermissionStatus.GRANTED) return true;
 
-    if (await NativePermissions.shouldShowCalendarRationale()) {
+    if (await NativePermissions.shouldShowNotificationsRationale()) {
       await NativePermissions.showRationale(
         'Permission required',
-        'We need this permission to access your calendar.',
+        'Allow notifications in order to receive relevant updates.',
         'Continue',
       );
     }
 
-    const result = await NativePermissions.requestCalendar();
+    const result = await NativePermissions.requestNotifications();
 
     // Return result after permission prompt answer
     if (result !== PermissionStatus.PERMANENTLY_DENIED) {
@@ -176,7 +176,7 @@ const Home: React.FC = () => {
     // Taking action when no prompt is shown as the permission is already permanently denied
     const shouldForwardToAppSettings = await NativePermissions.showRationale(
       'Permission required',
-      'Enable calendar permissions in the app settings.',
+      'Enable notifications in app settings in order to receive relevant updates.',
       'Continue',
       'Cancel',
     );
@@ -184,7 +184,7 @@ const Home: React.FC = () => {
     if (shouldForwardToAppSettings) {
       // Passing true to openAppSettings and wait until the user to return to the app
       await NativePermissions.openAppSettings(true);
-      const status = await NativePermissions.checkCalendar();
+      const status = await NativePermissions.checkNotifications();
 
       return status === PermissionStatus.GRANTED;
     }

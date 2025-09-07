@@ -40,9 +40,9 @@
 	<key>NSContactsUsageDescription</key>
 	<string>Use this field to describe usage reason.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Use this field to describe usage reason.\</string>
+	<string>Alway and when in use usage reason.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Use this field to describe usage reason.\</string>
+	<string>When in use usage reason.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Use this field to describe usage reason.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
