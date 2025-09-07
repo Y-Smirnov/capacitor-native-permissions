@@ -19,8 +19,11 @@ internal final class Camera {
         case .notDetermined:
                 return .denied
 
-        case .denied, .restricted:
+        case .denied:
                 return .permanentlyDenied
+
+        case .restricted:
+            return .restricted
 
         @unknown default:
             return .denied
@@ -30,7 +33,7 @@ internal final class Camera {
     internal func requestPermission() async -> PermissionStatus {
         let status = checkStatus()
 
-        guard status != .granted && status != .permanentlyDenied else {
+        guard status != .granted && status != .permanentlyDenied && status != .restricted else {
             return status
         }
 

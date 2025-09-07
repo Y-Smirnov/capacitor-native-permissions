@@ -11,24 +11,13 @@ internal struct AppTrackingTransparency {
 
     internal func checkStatus() -> PermissionStatus {
         let status = ATTrackingManager.trackingAuthorizationStatus
-
-        var permissionStatus = PermissionStatus.denied
-
-        if status == .authorized {
-            permissionStatus = .granted
-        }
-
-        if status == .denied {
-            return .permanentlyDenied
-        }
-
-        return permissionStatus
+        return mapStatus(status)
     }
 
     internal func requestPermission() async -> PermissionStatus {
         let status = checkStatus()
 
-        guard status != .granted && status != .permanentlyDenied else {
+        guard status != .granted && status != .permanentlyDenied && status != .restricted else {
             return status
         }
 
@@ -39,6 +28,21 @@ internal struct AppTrackingTransparency {
         }
         
         return .granted
+    }
+
+    private func mapStatus(_ status: ATTrackingManager.AuthorizationStatus) -> PermissionStatus {
+        switch status {
+        case .authorized:
+            return .granted
+        case .denied:
+            return .permanentlyDenied
+        case .restricted:
+            return .restricted
+        case .notDetermined:
+            return .denied
+        @unknown default:
+            return .denied
+        }
     }
 }
 

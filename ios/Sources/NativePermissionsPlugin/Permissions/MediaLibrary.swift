@@ -26,7 +26,7 @@ internal final class MediaLibrary: Sendable {
     internal func requestPermisison() async -> PermissionStatus {
         let status = checkStatus()
 
-        guard status != .granted && status != .permanentlyDenied else {
+        guard status != .granted && status != .permanentlyDenied && status != .restricted else {
             return status
         }
 
@@ -46,8 +46,11 @@ internal final class MediaLibrary: Sendable {
         case .authorized, .limited:
             return .granted
 
-        case .denied, .restricted:
+        case .denied:
             return .permanentlyDenied
+
+        case .restricted:
+            return .restricted
 
         case .notDetermined:
             return .denied

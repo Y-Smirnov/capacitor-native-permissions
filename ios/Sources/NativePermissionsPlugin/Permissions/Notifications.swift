@@ -30,7 +30,7 @@ internal struct Notifications {
     internal func requestPermission(_ options: [String]) async throws -> PermissionStatus {
         let status = await checkStatus()
 
-        guard status != .granted && status != .permanentlyDenied else {
+        guard status != .granted && status != .permanentlyDenied && status != .restricted else {
             return status
         }
 

@@ -41,7 +41,7 @@ internal final class Calendar {
     internal func requestPermission() async throws -> PermissionStatus {
         let status = checkStatus()
 
-        guard status != .granted && status != .permanentlyDenied else {
+        guard status != .granted && status != .permanentlyDenied && status != .restricted else {
             return status
         }
 
@@ -84,8 +84,10 @@ internal final class Calendar {
         switch status {
         case .authorized, .fullAccess, .writeOnly:
             return .granted
-        case .denied, .restricted:
+        case .denied:
             return .permanentlyDenied
+        case .restricted:
+            return .restricted
         case .notDetermined:
             return .denied
         @unknown default:
@@ -95,12 +97,14 @@ internal final class Calendar {
 
     private func mapFullAccessStatus(_ status: EKAuthorizationStatus) -> PermissionStatus {
         switch status {
-        case .fullAccess:
+        case .fullAccess, .authorized:
             return .granted
-        case .writeOnly, .authorized:
+        case .writeOnly:
             return .denied
-        case .denied, .restricted:
+        case .denied:
             return .permanentlyDenied
+        case .restricted:
+            return .restricted
         case .notDetermined:
             return .denied
         @unknown default:
