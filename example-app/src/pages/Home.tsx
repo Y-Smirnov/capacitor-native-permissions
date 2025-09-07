@@ -1,5 +1,5 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast } from '@ionic/react';
-import { NativePermissions, SupportedPermissions } from 'capacitor-native-permissions';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToast, IonToolbar } from '@ionic/react';
+import { NativePermissions, PermissionStatus, SupportedPermissions } from 'capacitor-native-permissions';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import '../theme/home.css';
@@ -69,7 +69,6 @@ const Home: React.FC = () => {
     [exec],
   );
 
-  // NEW: Common items that directly use plugin helpers
   const commonItems = useMemo<Item[]>(
     () => [
       {
@@ -113,6 +112,86 @@ const Home: React.FC = () => {
     [exec],
   );
 
+  const usageExamplesItems = useMemo<Item[]>(
+    () => [
+      {
+        label: 'Basic calendar flow',
+        onClick: () =>
+          exec(
+            () => ensureCalendarPermissionBasic(),
+            (result) => `Permission granted: ${String(result)}`,
+            'Basic calendar flow failed.',
+          ),
+      },
+      {
+        label: 'Advanced calendar flow',
+        onClick: () =>
+          exec(
+            () => ensureCalendarPermissionAdvanced(),
+            (result) => `Permission granted: ${String(result)}`,
+            'Advanced calendar flow failed.',
+          ),
+      },
+    ],
+    [exec],
+  );
+
+  async function ensureCalendarPermissionBasic(): Promise<boolean> {
+    const status = await NativePermissions.checkCalendar();
+
+    if (status === PermissionStatus.GRANTED) return true;
+
+    if (await NativePermissions.shouldShowCalendarRationale()) {
+      await NativePermissions.showRationale(
+        'Permission required',
+        'We need this permission to access your calendar.',
+        'Continue',
+      );
+    }
+
+    const result = await NativePermissions.requestCalendar();
+    return result === PermissionStatus.GRANTED;
+  }
+
+  async function ensureCalendarPermissionAdvanced(): Promise<boolean> {
+    const status = await NativePermissions.checkCalendar();
+
+    if (status === PermissionStatus.GRANTED) return true;
+
+    if (await NativePermissions.shouldShowCalendarRationale()) {
+      await NativePermissions.showRationale(
+        'Permission required',
+        'We need this permission to access your calendar.',
+        'Continue',
+      );
+    }
+
+    const result = await NativePermissions.requestCalendar();
+
+    // Return result after permission prompt answer
+    if (result !== PermissionStatus.PERMANENTLY_DENIED) {
+      return result === PermissionStatus.GRANTED;
+    }
+
+    // Taking action when no prompt is shown as the permission is already permanently denied
+    const shouldForwardToAppSettings = await NativePermissions.showRationale(
+      'Permission required',
+      'Enable calendar permissions in the app settings.',
+      'Continue',
+      'Cancel',
+    );
+
+    if (shouldForwardToAppSettings) {
+      // Passing true to openAppSettings and wait until the user to return to the app
+      await NativePermissions.openAppSettings(true);
+      const status = await NativePermissions.checkCalendar();
+
+      return status === PermissionStatus.GRANTED;
+    }
+
+    return false;
+  }
+
   const notificationItems = useMemo(() => buildItems(SupportedPermissions.Notifications), [buildItems]);
   const appTrackingTransparency = useMemo(() => buildItems(SupportedPermissions.AppTrackingTransparency), [buildItems]);
   const bluetoothItems = useMemo(() => buildItems(SupportedPermissions.Bluetooth), [buildItems]);
@@ -141,6 +220,7 @@ const Home: React.FC = () => {
 
         <div className="permissions-content">
           <PermissionSection title="Common" items={commonItems} />
+          <PermissionSection title="Usage Examples" items={usageExamplesItems} />
 
           <PermissionSection title="Notifications" items={notificationItems} />
           <PermissionSection title="App Tracking Transparency" items={appTrackingTransparency} />
