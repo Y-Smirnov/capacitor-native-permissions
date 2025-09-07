@@ -27,6 +27,10 @@
   "keywords": [
     "capacitor",
     "plugin",
+    "permissions",
+    "mobile",
+    "android",
+    "ios",
     "native"
   ],
   "scripts": {
