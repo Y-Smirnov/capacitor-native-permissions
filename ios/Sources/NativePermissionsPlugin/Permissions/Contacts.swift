@@ -16,8 +16,11 @@ internal final class Contacts {
         case .authorized, .limited:
             return .granted
 
-        case .notDetermined, .restricted:
+        case .notDetermined:
             return .denied
+
+        case .restricted:
+            return .restricted
 
         case .denied:
             return .permanentlyDenied
@@ -30,7 +33,7 @@ internal final class Contacts {
     internal func requestPermisison() async throws -> PermissionStatus {
         let status = checkStatus()
 
-        guard status != .granted || status != .permanentlyDenied else {
+        guard status != .granted && status != .permanentlyDenied && status != .restricted else {
             return status
         }
 

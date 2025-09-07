@@ -149,85 +149,129 @@ Platform nuance:
 
 ## Public API
 
-Notifications:
+#### Notifications:
 - `NativePermissions.checkNotifications(): Promise<PermissionStatus>`
 - `NativePermissions.shouldShowNotificationsRationale(): Promise<boolean>` (Android only)
 - `NativePermissions.requestNotifications(options?: NotificationsAuthorizationOptionsIos[]): Promise<PermissionStatus>`
     - On iOS, options defaults to ['badge', 'alert', 'sound'] when not defined.
     - On Android, options are ignored.
 
-App Tracking Transparency (iOS only):
+#### App Tracking Transparency (iOS only):
 - `NativePermissions.checkAppTrackingTransparency(): Promise<PermissionStatus>`
 - `NativePermissions.requestAppTrackingTransparency(): Promise<PermissionStatus>`
     - Returns PermissionStatus.NOT_APPLICABLE on Android.
 
-Bluetooth:
+#### Bluetooth:
 - `NativePermissions.checkBluetooth(): Promise<PermissionStatus>`
 - `NativePermissions.shouldShowBluetoothRationale(): Promise<boolean>` (Android only, returns always false on iOS)
 - `NativePermissions.requestBluetooth(): Promise<PermissionStatus>`
 
-Calendar:
+#### Calendar:
 - `NativePermissions.checkCalendar(): Promise<PermissionStatus>`
 - `NativePermissions.shouldShowCalendarRationale(): Promise<boolean>` (Android only, returns always false on iOS)
 - `NativePermissions.requestCalendar(): Promise<PermissionStatus>`
 
-Reminders (iOS only):
+#### Reminders (iOS only):
 - `NativePermissions.checkReminders(): Promise<PermissionStatus>`
 - `NativePermissions.requestReminders(): Promise<PermissionStatus>`
     - Returns PermissionStatus.NOT_APPLICABLE on non‑iOS.
 
-Camera:
+#### Camera:
 - `NativePermissions.checkCamera(): Promise<PermissionStatus>`
 - `NativePermissions.shouldShowCameraRationale(): Promise<boolean>` (Android only, returns always false on iOS)
 - `NativePermissions.requestCamera(): Promise<PermissionStatus>`
 
-Contacts:
+#### Contacts:
 - `NativePermissions.checkContacts(): Promise<PermissionStatus>`
 - `NativePermissions.shouldShowContactsRationale(): Promise<boolean>` (Android only, returns always false on iOS)
 - `NativePermissions.requestContacts(): Promise<PermissionStatus>`
 
-Media (Photos/Media Library):
+#### Media (Photos/Media Library):
 - `NativePermissions.checkMedia(): Promise<PermissionStatus>`
 - `NativePermissions.shouldShowMediaRationale(): Promise<boolean>` (Android only, returns always false on iOS)
 - `NativePermissions.requestMedia(): Promise<PermissionStatus>`
 
-Record (Microphone):
+#### Record (Microphone):
 - `NativePermissions.checkAudioRecord(): Promise<PermissionStatus>`
 - `NativePermissions.shouldShowAudioRecordRationale(): Promise<boolean>` (Android only, returns always false on iOS)
 - `NativePermissions.requestAudioRecord(): Promise<PermissionStatus>`
 
-Location (Foreground):
+#### Location (Foreground):
 - `NativePermissions.checkLocationForeground(): Promise<PermissionStatus>`
 - `NativePermissions.shouldShowLocationForegroundRationale(): Promise<boolean>` (Android only, returns always false on iOS)
 - `NativePermissions.requestLocationForeground(): Promise<PermissionStatus>`
 
-Location (Background):
+#### Location (Background):
 - `NativePermissions.checkLocationBackground(): Promise<PermissionStatus>`
 - `NativePermissions.shouldShowLocationBackgroundRationale(): Promise<boolean>` (Android only, returns always false on iOS)
 - `NativePermissions.requestLocationBackground(): Promise<PermissionStatus>`
 
-## Usage
+## Usage Examples
 
 #### Basic usage
-Check → should show rationale → if `true`, show rationale → request
-
-#### Advanced usage
-Check → should show rationale → if `true`, show rationale → request → if `PERMANENTLY_DENIED`, forward to settings when permanently denied
-
-## Examples
+Check → should show rationale → if `true`, show rationale → request → return result
 
 ```typescript
-async function ensureCalendarPermission(): Promise<boolean> {
-  const status = await NativePermissions.checkCalendar();
+  async function ensureNotificationsPermission(): Promise<boolean> {
+  const status = await NativePermissions.checkNotifications();
 
   if (status === PermissionStatus.GRANTED) return true;
 
-  if (await NativePermissions.shouldShowCalendarRationale()) {
-    // Show a custom explanation to the user before requesting
+  if (await NativePermissions.shouldShowNotificationsRationale()) {
+    await NativePermissions.showRationale(
+      'Permission required',
+      'Allow notifications in order to receive relevant updates.',
+      'Continue',
+    );
   }
 
-  const result = await NativePermissions.requestCalendar();
+  const result = await NativePermissions.requestNotifications();
+
   return result === PermissionStatus.GRANTED;
+}
+```
+
+#### Advanced usage
+Check → should show rationale → if `true`, show rationale → request → if `PERMANENTLY_DENIED`, forward to settings when permanently denied → check again → return result
+
+```typescript
+  async function ensureNotificationsPermission(): Promise<boolean> {
+  const status = await NativePermissions.checkNotifications();
+
+  if (status === PermissionStatus.GRANTED) return true;
+
+  if (await NativePermissions.shouldShowNotificationsRationale()) {
+    await NativePermissions.showRationale(
+      'Permission required',
+      'Allow notifications in order to receive relevant updates.',
+      'Continue',
+    );
+  }
+
+  const result = await NativePermissions.requestNotifications();
+
+  // Return result after permission prompt answer
+  if (result !== PermissionStatus.PERMANENTLY_DENIED) {
+    return result === PermissionStatus.GRANTED;
+  }
+
+  // Taking action when no prompt is shown as the permission is already permanently denied
+  const shouldForwardToAppSettings = await NativePermissions.showRationale(
+    'Permission required',
+    'Enable notifications in app settings in order to receive relevant updates.',
+    'Continue',
+    'Cancel',
+  );
+
+  if (shouldForwardToAppSettings) {
+    // Passing true to openAppSettings and wait until the user to return to the app
+    await NativePermissions.openAppSettings(true);
+    const status = await NativePermissions.checkNotifications();
+
+    return status === PermissionStatus.GRANTED;
+  }
+
+  return false;
 }
 ```
 

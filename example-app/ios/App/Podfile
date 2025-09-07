@@ -37,7 +37,7 @@ post_install do |installer|
         'PERMISSION_CALENDAR',
         'PERMISSION_REMINDERS',
         'PERMISSION_CAMERA',
-#         'PERMISSION_CONTACTS',
+        'PERMISSION_CONTACTS',
         'PERMISSION_MEDIA',
         'PERMISSION_RECORD',
         'PERMISSION_LOCATION_FOREGROUND',

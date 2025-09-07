@@ -1,5 +1,5 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast } from '@ionic/react';
-import { NativePermissions, SupportedPermissions } from 'capacitor-native-permissions';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToast, IonToolbar } from '@ionic/react';
+import { NativePermissions, PermissionStatus, SupportedPermissions } from 'capacitor-native-permissions';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import '../theme/home.css';
@@ -69,7 +69,6 @@ const Home: React.FC = () => {
     [exec],
   );
 
-  // NEW: Common items that directly use plugin helpers
   const commonItems = useMemo<Item[]>(
     () => [
       {
@@ -88,11 +87,22 @@ const Home: React.FC = () => {
           ),
       },
       {
-        label: 'Open app settings',
+        label: 'Open app settings (no wait)',
         onClick: () =>
           exec(
             async () => {
-              await NativePermissions.openAppSettings();
+              await NativePermissions.openAppSettings(false);
+            },
+            () => 'Returned from app settings.',
+            'Failed to open app settings.',
+          ),
+      },
+      {
+        label: 'Open app settings (wait)',
+        onClick: () =>
+          exec(
+            async () => {
+              await NativePermissions.openAppSettings(true);
             },
             () => 'Returned from app settings.',
             'Failed to open app settings.',
@@ -101,6 +111,86 @@ const Home: React.FC = () => {
     ],
     [exec],
   );
+
+  const usageExamplesItems = useMemo<Item[]>(
+    () => [
+      {
+        label: 'Basic notifications flow',
+        onClick: () =>
+          exec(
+            () => ensureNotificationsPermissionBasic(),
+            (result) => `Permission granted: ${String(result)}`,
+            'Basic notifications flow failed.',
+          ),
+      },
+      {
+        label: 'Advanced notifications flow',
+        onClick: () =>
+          exec(
+            () => ensureNotificationsPermissionAdvanced(),
+            (result) => `Permission granted: ${String(result)}`,
+            'Advanced notifications flow failed.',
+          ),
+      },
+    ],
+    [exec],
+  );
+
+  async function ensureNotificationsPermissionBasic(): Promise<boolean> {
+    const status = await NativePermissions.checkNotifications();
+
+    if (status === PermissionStatus.GRANTED) return true;
+
+    if (await NativePermissions.shouldShowNotificationsRationale()) {
+      await NativePermissions.showRationale(
+        'Permission required',
+        'Allow notifications in order to receive relevant updates.',
+        'Continue',
+      );
+    }
+
+    const result = await NativePermissions.requestNotifications();
+    return result === PermissionStatus.GRANTED;
+  }
+
+  async function ensureNotificationsPermissionAdvanced(): Promise<boolean> {
+    const status = await NativePermissions.checkNotifications();
+
+    if (status === PermissionStatus.GRANTED) return true;
+
+    if (await NativePermissions.shouldShowNotificationsRationale()) {
+      await NativePermissions.showRationale(
+        'Permission required',
+        'Allow notifications in order to receive relevant updates.',
+        'Continue',
+      );
+    }
+
+    const result = await NativePermissions.requestNotifications();
+
+    // Return result after permission prompt answer
+    if (result !== PermissionStatus.PERMANENTLY_DENIED) {
+      return result === PermissionStatus.GRANTED;
+    }
+
+    // Taking action when no prompt is shown as the permission is already permanently denied
+    const shouldForwardToAppSettings = await NativePermissions.showRationale(
+      'Permission required',
+      'Enable notifications in app settings in order to receive relevant updates.',
+      'Continue',
+      'Cancel',
+    );
+
+    if (shouldForwardToAppSettings) {
+      // Passing true to openAppSettings and wait until the user to return to the app
+      await NativePermissions.openAppSettings(true);
+      const status = await NativePermissions.checkNotifications();
+
+      return status === PermissionStatus.GRANTED;
+    }
+
+    return false;
+  }
 
   const notificationItems = useMemo(() => buildItems(SupportedPermissions.Notifications), [buildItems]);
   const appTrackingTransparency = useMemo(() => buildItems(SupportedPermissions.AppTrackingTransparency), [buildItems]);
@@ -130,6 +220,7 @@ const Home: React.FC = () => {
 
         <div className="permissions-content">
           <PermissionSection title="Common" items={commonItems} />
+          <PermissionSection title="Usage Examples" items={usageExamplesItems} />
 
           <PermissionSection title="Notifications" items={notificationItems} />
           <PermissionSection title="App Tracking Transparency" items={appTrackingTransparency} />

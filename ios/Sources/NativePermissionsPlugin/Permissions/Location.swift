@@ -38,7 +38,7 @@ internal final class Location: NSObject {
     internal func requestForegroundPermission() async -> PermissionStatus {
         let status = checkForegroundStatus()
 
-        if status == .granted || status == .permanentlyDenied {
+        guard status != .granted && status != .permanentlyDenied && status != .restricted else {
             return status
         }
 
@@ -59,7 +59,7 @@ internal final class Location: NSObject {
     internal func requestBackgroundPermission() async -> PermissionStatus {
         let status = checkBackgroundStatus()
 
-        if status == .granted || status == .permanentlyDenied {
+        guard status != .granted && status != .permanentlyDenied && status != .restricted else {
             return status
         }
 
@@ -103,8 +103,10 @@ internal final class Location: NSObject {
     private func mapStatus(_ permission: LocationPermission, authorizationStatus: CLAuthorizationStatus) -> PermissionStatus {
         if permission == .background {
             switch authorizationStatus {
-            case .notDetermined, .restricted:
+            case .notDetermined:
                 return .denied
+            case .restricted:
+                return .restricted
             case .denied:
                 return .permanentlyDenied
             case .authorizedWhenInUse:
@@ -117,10 +119,12 @@ internal final class Location: NSObject {
         }
 
         switch authorizationStatus {
-        case .notDetermined, .restricted:
+        case .notDetermined:
             return .denied
         case .denied:
             return .permanentlyDenied
+        case .restricted:
+            return .restricted
         case .authorizedWhenInUse, .authorizedAlways:
             return .granted
         @unknown default:

@@ -14,22 +14,18 @@ export class NativePermissions {
     positiveButton?: string,
     negativeButton?: string,
   ): Promise<boolean> {
-    if (Capacitor.getPlatform() == 'android') {
-      const { result } = await NativePlugin.showRationale({
-        title: title,
-        message: message,
-        positiveButton: positiveButton,
-        negativeButton: negativeButton,
-      });
+    const { result } = await NativePlugin.showRationale({
+      title: title,
+      message: message,
+      positiveButton: positiveButton,
+      negativeButton: negativeButton,
+    });
 
-      return result;
-    }
-
-    return true;
+    return result;
   }
 
-  public static async openAppSettings(): Promise<void> {
-    await NativePlugin.openAppSettings();
+  public static async openAppSettings(waitUntilReturn: boolean): Promise<void> {
+    await NativePlugin.openAppSettings({ waitUntilReturn });
   }
 
   // Notifications
