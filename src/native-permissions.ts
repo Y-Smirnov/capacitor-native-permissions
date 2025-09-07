@@ -28,8 +28,8 @@ export class NativePermissions {
     return true;
   }
 
-  public static async openAppSettings(): Promise<void> {
-    await NativePlugin.openAppSettings();
+  public static async openAppSettings(waitUntilReturn: boolean): Promise<void> {
+    await NativePlugin.openAppSettings({ waitUntilReturn });
   }
 
   // Notifications

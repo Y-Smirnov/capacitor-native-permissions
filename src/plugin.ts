@@ -21,5 +21,5 @@ export interface NativePermissionsPlugin {
 
   request(options: { permission: SupportedPermissions; options?: string[] }): Promise<{ result: PermissionStatus }>;
 
-  openAppSettings(): Promise<void>;
+  openAppSettings(options: { waitUntilReturn: boolean }): Promise<void>;
 }

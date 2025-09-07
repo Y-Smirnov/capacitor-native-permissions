@@ -3,8 +3,7 @@ import Capacitor
 
 @objc(NativePermissionsPlugin)
 public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
-    private var settingsCall: CAPPluginCall?
-    private var settingsObserver: NSObjectProtocol?
+    private var pendingSettingsCall: CAPPluginCall?
 
     private let notificationCenter = UNUserNotificationCenter.current()
 
@@ -184,31 +183,47 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func openAppSettings(_ call: CAPPluginCall) {
+        guard let waitUntilReturn = call.getBool("waitUntilReturn") else {
+            call.reject("Missing 'waitUntilReturn' parameter.")
+            return
+        }
+
         guard let url = URL(string: UIApplication.openSettingsURLString) else {
             call.reject("Unable to create settings URL")
             return
         }
 
-        settingsCall = call
+        DispatchQueue.main.async {
+            UIApplication.shared.open(url, options: [:]) { result in
+                switch result {
 
-        settingsObserver = NotificationCenter.default.addObserver(
-            forName: UIApplication.didBecomeActiveNotification,
-            object: nil,
-            queue: nil
-        ) { [weak self] _ in
-            guard let self = self, let savedCall = self.settingsCall else { return }
-            savedCall.resolve()
-            self.settingsCall = nil
+                case true:
+                    if !waitUntilReturn {
+                        call.resolve()
+                        return
+                    }
 
-            if let observer = self.settingsObserver {
-                NotificationCenter.default.removeObserver(observer)
-                self.settingsObserver = nil
+                    self.pendingSettingsCall = call
+
+                    NotificationCenter.default.addObserver(
+                        self,
+                        selector: #selector(self.didBecomeActiveNotification),
+                        name: UIApplication.didBecomeActiveNotification,
+                        object: nil
+                    )
+
+                case false:
+                    call.reject("Failed to open settings")
+                }
             }
         }
+    }
 
-        DispatchQueue.main.async {
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
-        }
+    @objc private func didBecomeActiveNotification() {
+        NotificationCenter.default.removeObserver(self)
+
+        pendingSettingsCall?.resolve()
+        pendingSettingsCall = nil
     }
 
     private func getPermission(_ call: CAPPluginCall) -> AppPermission? {

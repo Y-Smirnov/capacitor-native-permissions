@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -15,12 +16,12 @@ import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
+import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
 import io.ysmirnov.capacitor.permissions.models.PermissionStatus
 
 @CapacitorPlugin(name = "NativePermissionsPlugin")
 public class NativePermissionsPlugin : Plugin() {
-    private var settingsCallId: String? = null
     private var currentRequest: CurrentRequest? = null
     private lateinit var permissionsLauncher: ActivityResultLauncher<Array<String>>
 
@@ -55,21 +56,6 @@ public class NativePermissionsPlugin : Plugin() {
 
                 currentRequest = null
             }
-    }
-
-    override fun handleOnResume() {
-        super.handleOnResume()
-
-        settingsCallId?.let { id ->
-            val call = bridge.getSavedCall(id)
-
-            if (call != null) {
-                call.resolve()
-                bridge.releaseCall(call)
-            }
-
-            settingsCallId = null
-        }
     }
 
     @PluginMethod
@@ -218,16 +204,40 @@ public class NativePermissionsPlugin : Plugin() {
 
     @PluginMethod
     public fun openAppSettings(call: PluginCall) {
+        val waitUntilReturn = call.getBoolean("waitUntilReturn")
+
+        if (waitUntilReturn == null) {
+            call.reject("Missing 'waitUntilReturn' parameter.")
+            return
+        }
+
         val intent =
             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 data = Uri.fromParts("package", context.packageName, null)
             }
 
-        // Save call so we can resolve later
-        bridge.saveCall(call)
-        settingsCallId = call.callbackId
+        if (waitUntilReturn) {
+            bridge.saveCall(call)
+            startActivityForResult(call, intent, "openAppSettingsResult")
 
-        activity.startActivity(intent)
+            return
+        }
+
+        try {
+            activity.startActivity(intent)
+            call.resolve()
+        } catch (e: Exception) {
+            call.reject("Unable to open app settings", e)
+        }
+    }
+
+    @Suppress("unused")
+    @ActivityCallback
+    private fun openAppSettingsResult(
+        call: PluginCall,
+        result: ActivityResult,
+    ) {
+        call.resolve()
     }
 
     private fun getPermission(call: PluginCall): AppPermission? {
