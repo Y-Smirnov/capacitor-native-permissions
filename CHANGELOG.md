@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.0.1
+
+#### iOS
+
+- Remove outdated iOS version checks
+
 ## 1.0.0
 
 - Add an option when opening app settings to wait until the user returns to the app

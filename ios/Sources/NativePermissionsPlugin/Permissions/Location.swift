@@ -24,11 +24,7 @@ internal final class Location: NSObject {
     }
 
     private var authorizationStatus: CLAuthorizationStatus {
-        if #available(iOS 14.0, *) {
-            return locationManager.authorizationStatus
-        }
-
-        return CLLocationManager.authorizationStatus()
+        return locationManager.authorizationStatus
     }
 
     internal func checkForegroundStatus() -> PermissionStatus {

@@ -26,7 +26,7 @@ npx cap sync
 
 ### iOS
 
-In iOS, no permissions are available by default. Edit the following section in your Podfile and uncomment the permissions you need:
+In iOS, no permissions are available by default. Edit the following section in your `Podfile` and uncomment the permissions you need:
 
 ```ruby
 post_install do |installer|
@@ -57,7 +57,7 @@ post_install do |installer|
 end
 ```
 
-Add corresponding permissions usage description in your Info.plist:
+Add corresponding permissions usage description in your `Info.plist`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -96,7 +96,8 @@ Add corresponding permissions usage description in your Info.plist:
 
 ### Android
 
-Add used permissions to your AndroidManifest.xml:
+Add used permissions to your `AndroidManifest.xml`.
+
 Note: Make sure to keep only the permissions you need.
 
 ```xml
@@ -133,7 +134,7 @@ Note: Make sure to keep only the permissions you need.
 <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 ```
 
-## Permission statuses
+## Permission status
 
 - `PermissionStatus.GRANTED`
 - `PermissionStatus.DENIED`
@@ -141,11 +142,11 @@ Note: Make sure to keep only the permissions you need.
 - `PermissionStatus.PERMANENTLY_DENIED`
 - `PermissionStatus.NOT_APPLICABLE`
 
-If a permission is not applicable on the current platform (for example, requesting appTrackingTransparency on Android), the result will be PermissionStatus.NOT_APPLICABLE.
+If a permission is not applicable on the current platform (for example, requesting appTrackingTransparency on Android), the result will be `PermissionStatus.NOT_APPLICABLE`.
 
 Platform nuance:
-- Only iOS can return PERMANENTLY_DENIED when checking permission status.
-- Both platforms can return PERMANENTLY_DENIED when a permission is permanently blocked (i.e., no request will be shown). In this case, you may guide the user to system settings.
+- Only iOS can return `PERMANENTLY_DENIED` when checking permission status.
+- Both platforms can return `PERMANENTLY_DENIED` when a permission is permanently blocked (i.e., no request will be shown). In this case, you may guide the user to system settings.
 
 ## Public API
 
@@ -277,8 +278,8 @@ Check → should show rationale → if `true`, show rationale → request → if
 
 ## Behavior notes and edge cases
 
-- PERMANENTLY_DENIED means the system won’t prompt anymore. Direct users to system settings to change it.
-- RESTRICTED indicates a policy or parental-control block; treat it as non‑grantable.
+- `PERMANENTLY_DENIED` means the system won’t prompt anymore. Direct users to system settings to change it.
+- `RESTRICTED` indicates a policy or parental-control block; treat it as non‑grantable.
 - Some permissions are platform‑specific. When permission does not apply to current platforms you’ll get `NOT_APPLICABLE`.
 - Rationale helpers are Android-only and return false on iOS.
 - For background location, foreground must be granted first.
