@@ -209,7 +209,7 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
             if let vc = self.bridge?.viewController {
                 vc.present(alert, animated: true, completion: nil)
             } else {
-                call.reject("Cannot get view controller to present alert")
+                call.reject("Cannot get view controller to present alert.")
             }
         }
     }
@@ -221,7 +221,7 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
         }
 
         guard let url = URL(string: UIApplication.openSettingsURLString) else {
-            call.reject("Unable to create settings URL")
+            call.reject("Unable to create settings URL.")
             return
         }
 
@@ -245,7 +245,7 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     )
 
                 case false:
-                    call.reject("Failed to open settings")
+                    call.reject("Failed to open settings.")
                 }
             }
         }
