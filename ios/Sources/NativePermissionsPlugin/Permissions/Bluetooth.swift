@@ -13,21 +13,17 @@ internal final class Bluetooth: NSObject, CBCentralManagerDelegate {
     private var continuation: CheckedContinuation<PermissionStatus, Never>?
 
     internal func checkStatus() -> PermissionStatus {
-        if #available(iOS 13.1, *) {
-            switch CBManager.authorization {
-            case .allowedAlways:
-                return .granted
-            case .denied:
-                return .permanentlyDenied
-            case .restricted:
-                return .restricted
-            case .notDetermined:
-                return .denied
-            @unknown default:
-                return .denied
-            }
-        } else {
+        switch CBManager.authorization {
+        case .allowedAlways:
             return .granted
+        case .denied:
+            return .permanentlyDenied
+        case .restricted:
+            return .restricted
+        case .notDetermined:
+            return .denied
+        @unknown default:
+            return .denied
         }
     }
 
