@@ -133,4 +133,28 @@ export const permissionRegistry: Record<SupportedPermissions, PermissionHandlers
       return await NativePermissions.shouldShowLocationBackgroundRationale();
     },
   },
+
+  [SupportedPermissions.BodySensorsForeground]: {
+    check: async () => {
+      return await NativePermissions.checkBodySensorsForeground();
+    },
+    request: async () => {
+      return await NativePermissions.requestBodySensorsForeground();
+    },
+    shouldShowRationale: async () => {
+      return await NativePermissions.shouldShowBodySensorsForegroundRationale();
+    },
+  },
+
+  [SupportedPermissions.BodySensorsBackground]: {
+    check: async () => {
+      return await NativePermissions.checkBodySensorsBackground();
+    },
+    request: async () => {
+      return await NativePermissions.requestBodySensorsBackground();
+    },
+    shouldShowRationale: async () => {
+      return await NativePermissions.shouldShowBodySensorsBackgroundRationale();
+    },
+  },
 };

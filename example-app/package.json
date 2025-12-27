@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint"
+    "lint": "eslint",
+    "ionic:android:studio": "ionic cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
