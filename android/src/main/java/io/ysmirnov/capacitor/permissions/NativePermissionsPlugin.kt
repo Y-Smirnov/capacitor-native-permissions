@@ -246,6 +246,8 @@ public class NativePermissionsPlugin : Plugin() {
         return when (permission) {
             "locationForeground" -> AppPermission.LOCATION_FOREGROUND
             "locationBackground" -> AppPermission.LOCATION_BACKGROUND
+            "bodySensorsForeground" -> AppPermission.BODY_SENSORS_FOREGROUND
+            "bodySensorsBackground" -> AppPermission.BODY_SENSORS_BACKGROUND
 
             else -> AppPermission.entries.firstOrNull { it.name.equals(permission, ignoreCase = true) }
         }
@@ -269,6 +271,8 @@ public class NativePermissionsPlugin : Plugin() {
         RECORD,
         LOCATION_FOREGROUND,
         LOCATION_BACKGROUND,
+        BODY_SENSORS_FOREGROUND,
+        BODY_SENSORS_BACKGROUND,
         ;
 
         fun manifestValues(pluginContext: android.content.Context): List<String>? {
@@ -404,6 +408,21 @@ public class NativePermissionsPlugin : Plugin() {
                                 ),
                             )
 
+                        list.ifEmpty { null }
+                    }
+                }
+
+                BODY_SENSORS_FOREGROUND -> {
+                    val list = declared(arrayOf(Manifest.permission.BODY_SENSORS))
+                    list.ifEmpty { null }
+                }
+
+                BODY_SENSORS_BACKGROUND -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        val list = declared(arrayOf(Manifest.permission.BODY_SENSORS_BACKGROUND))
+                        list.ifEmpty { null }
+                    } else {
+                        val list = declared(arrayOf(Manifest.permission.BODY_SENSORS))
                         list.ifEmpty { null }
                     }
                 }
