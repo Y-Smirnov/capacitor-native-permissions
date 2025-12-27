@@ -10,4 +10,6 @@ export enum SupportedPermissions {
   Record = 'record',
   LocationForeground = 'locationForeground',
   LocationBackground = 'locationBackground',
+  BodySensorsForeground = 'bodySensorsForeground',
+  BodySensorsBackground = 'bodySensorsBackground',
 }

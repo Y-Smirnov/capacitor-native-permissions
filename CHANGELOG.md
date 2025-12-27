@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.1.1
+
+#### Android
+
+- Add body sensors permission
+
 ## 1.0.1
 
 #### iOS
