@@ -14,6 +14,7 @@ A Capacitor plugin for requesting and managing native permissions on Android and
 - Media
 - Record (Microphone)
 - Location (Foreground and Background)
+- Body Sensors (Foreground and Background, Android only)
 
 ## Setup
 
@@ -132,6 +133,9 @@ Note: Make sure to keep only the permissions you need.
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+<uses-permission android:name="android.permission.BODY_SENSORS" />
+<uses-permission android:name="android.permission.BODY_SENSORS_BACKGROUND" />
 ```
 
 ## Permission status
@@ -206,6 +210,16 @@ Platform nuance:
 - `NativePermissions.checkLocationBackground(): Promise<PermissionStatus>`
 - `NativePermissions.shouldShowLocationBackgroundRationale(): Promise<boolean>` (Android only, returns always false on iOS)
 - `NativePermissions.requestLocationBackground(): Promise<PermissionStatus>`
+
+#### Body Sensors (Foreground, Android only):
+- `NativePermissions.checkBodySensorsForeground(): Promise<PermissionStatus>`
+- `NativePermissions.shouldShowBodySensorsForegroundRationale(): Promise<boolean>`
+- `NativePermissions.requestBodySensorsForeground(): Promise<PermissionStatus>`
+
+#### Body Sensors (Background, Android only):
+- `NativePermissions.checkBodySensorsBackground(): Promise<PermissionStatus>`
+- `NativePermissions.shouldShowBodySensorsBackgroundRationale(): Promise<boolean>`
+- `NativePermissions.requestBodySensorsBackground(): Promise<PermissionStatus>`
 
 ## Usage Examples
 
@@ -283,6 +297,7 @@ Check → should show rationale → if `true`, show rationale → request → if
 - Some permissions are platform‑specific. When permission does not apply to current platforms you’ll get `NOT_APPLICABLE`.
 - Rationale helpers are Android-only and return false on iOS.
 - For background location, foreground must be granted first.
+- For background body sensors, foreground must be granted first. (Android)
 
 ## License
 

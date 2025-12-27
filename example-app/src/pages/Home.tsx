@@ -203,6 +203,8 @@ const Home: React.FC = () => {
   const audioRecord = useMemo(() => buildItems(SupportedPermissions.Record), [buildItems]);
   const locationForeground = useMemo(() => buildItems(SupportedPermissions.LocationForeground), [buildItems]);
   const locationBackground = useMemo(() => buildItems(SupportedPermissions.LocationBackground), [buildItems]);
+  const bodySensorsForeground = useMemo(() => buildItems(SupportedPermissions.BodySensorsForeground), [buildItems]);
+  const bodySensorsBackground = useMemo(() => buildItems(SupportedPermissions.BodySensorsBackground), [buildItems]);
 
   return (
     <IonPage>
@@ -233,6 +235,8 @@ const Home: React.FC = () => {
           <PermissionSection title="Audio Record" items={audioRecord} />
           <PermissionSection title="Location Foreground" items={locationForeground} />
           <PermissionSection title="Location Background" items={locationBackground} />
+          <PermissionSection title="Body Sensors Foreground" items={bodySensorsForeground} />
+          <PermissionSection title="Body Sensors Background" items={bodySensorsBackground} />
         </div>
 
         <IonToast isOpen={showToast} message={toastMessage} duration={2000} onDidDismiss={() => setShowToast(false)} />

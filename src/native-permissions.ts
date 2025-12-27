@@ -307,4 +307,78 @@ export class NativePermissions {
 
     return result;
   }
+
+  // Body Sensors
+
+  public static async checkBodySensorsForeground(): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.check({
+        permission: SupportedPermissions.BodySensorsForeground,
+      });
+
+      return result;
+    }
+
+    return PermissionStatus.NOT_APPLICABLE;
+  }
+
+  public static async shouldShowBodySensorsForegroundRationale(): Promise<boolean> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.shouldShowRationale({
+        permission: SupportedPermissions.BodySensorsForeground,
+      });
+
+      return result;
+    }
+
+    return false;
+  }
+
+  public static async requestBodySensorsForeground(): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.request({
+        permission: SupportedPermissions.BodySensorsForeground,
+      });
+
+      return result;
+    }
+
+    return PermissionStatus.NOT_APPLICABLE;
+  }
+
+  public static async checkBodySensorsBackground(): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.check({
+        permission: SupportedPermissions.BodySensorsBackground,
+      });
+
+      return result;
+    }
+
+    return PermissionStatus.NOT_APPLICABLE;
+  }
+
+  public static async shouldShowBodySensorsBackgroundRationale(): Promise<boolean> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.shouldShowRationale({
+        permission: SupportedPermissions.BodySensorsBackground,
+      });
+
+      return result;
+    }
+
+    return false;
+  }
+
+  public static async requestBodySensorsBackground(): Promise<PermissionStatus> {
+    if (Capacitor.getPlatform() == 'android') {
+      const { result } = await NativePlugin.request({
+        permission: SupportedPermissions.BodySensorsBackground,
+      });
+
+      return result;
+    }
+
+    return PermissionStatus.NOT_APPLICABLE;
+  }
 }
