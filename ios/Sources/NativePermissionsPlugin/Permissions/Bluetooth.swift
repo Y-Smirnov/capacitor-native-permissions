@@ -4,13 +4,13 @@
 
 #if PERMISSION_BLUETOOTH
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 
-internal final class Bluetooth: NSObject, CBCentralManagerDelegate {
+internal final class Bluetooth: NSObject, CBCentralManagerDelegate, @unchecked Sendable {
     internal static let instance = Bluetooth()
 
-    private var centralManager: CBCentralManager?
-    private var continuation: CheckedContinuation<PermissionStatus, Never>?
+    @MainActor private var centralManager: CBCentralManager?
+    @MainActor private var continuations: [CheckedContinuation<PermissionStatus, Never>] = []
 
     internal func checkStatus() -> PermissionStatus {
         switch CBManager.authorization {
@@ -27,35 +27,49 @@ internal final class Bluetooth: NSObject, CBCentralManagerDelegate {
         }
     }
 
+    @MainActor
     internal func requestPermission() async -> PermissionStatus {
         let status = checkStatus()
 
-        guard status != .granted && status != .permanentlyDenied && status != .restricted else {
+        guard status != .granted,
+              status != .permanentlyDenied,
+              status != .restricted
+        else {
             return status
         }
 
         return await withCheckedContinuation { continuation in
-            self.continuation = continuation
-            self.centralManager = CBCentralManager(delegate: self, queue: nil)
+            continuations.append(continuation)
+
+            guard centralManager == nil else { return }
+
+            centralManager = CBCentralManager(delegate: self, queue: nil)
         }
     }
 
     internal func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        guard let continuation = continuation else { return }
+        Task { @MainActor in
+            let status: PermissionStatus
 
-        switch central.state {
-        case .unsupported, .unauthorized, .unknown:
-            continuation.resume(returning: .denied)
+            switch central.state {
+            case .unsupported, .unauthorized, .unknown:
+                status = .denied
 
-        case .poweredOn, .poweredOff, .resetting:
-            continuation.resume(returning: .granted)
+            case .poweredOn, .poweredOff, .resetting:
+                status = .granted
 
-        @unknown default:
-            continuation.resume(returning: .denied)
+            @unknown default:
+                status = .denied
+            }
+
+            let continuations = self.continuations
+            self.continuations.removeAll()
+            self.centralManager = nil
+
+            continuations.forEach {
+                $0.resume(returning: status)
+            }
         }
-
-        self.centralManager = nil
-        self.continuation = nil
     }
 }
 
