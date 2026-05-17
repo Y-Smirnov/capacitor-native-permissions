@@ -27,7 +27,11 @@ npx cap sync
 
 ### iOS
 
-In iOS, no permissions are available by default. Edit the following section in your `Podfile` and uncomment the permissions you need:
+In iOS, no permissions are available by default. You must enable each permission explicitly.
+
+#### CocoaPods
+
+If your project uses CocoaPods, enable (uncomment) the permissions you need with Podfile flags:
 
 ```ruby
 post_install do |installer|
@@ -57,6 +61,48 @@ post_install do |installer|
   end
 end
 ```
+
+#### Swift Package Manager
+
+If your project uses SPM, you need to set package traits in `capacitor.config.ts`.
+
+SPM package traits require Swift tools version `6.1`. 
+Because Capacitor does not support Swift 6 yet, the SPM configuration must be placed under the `experimental` section and must explicitly set `swiftToolsVersion: '6.1'`.
+Enable (uncomment) the permissions you need:
+
+```ts
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+
+  experimental: {
+    ios: {
+      spm: {
+        swiftToolsVersion: '6.1',
+        packageTraits: {
+          'capacitor-native-permissions': [
+            // 'PERMISSION_NOTIFICATIONS',
+            // 'PERMISSION_APP_TRACKING_TRANSPARENCY',
+            // 'PERMISSION_BLUETOOTH',
+            // 'PERMISSION_CALENDAR',
+            // 'PERMISSION_REMINDERS',
+            // 'PERMISSION_CAMERA',
+            // 'PERMISSION_CONTACTS',
+            // 'PERMISSION_MEDIA',
+            // 'PERMISSION_RECORD',
+            // 'PERMISSION_LOCATION_FOREGROUND',
+            // 'PERMISSION_LOCATION_BACKGROUND',
+          ],
+        },
+      },
+    },
+  },
+};
+
+export default config;
+```
+
+> Note: If the enabled permissions do not update correctly, clean Derived Data.
 
 Add corresponding permissions usage description in your `Info.plist`:
 

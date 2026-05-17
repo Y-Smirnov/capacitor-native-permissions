@@ -1,8 +1,10 @@
 import Foundation
-import Capacitor
+@preconcurrency import Capacitor
 
 @objc(NativePermissionsPlugin)
-public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
+public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin, @unchecked Sendable {
+
+    @MainActor
     private var pendingSettingsCall: CAPPluginCall?
 
     private let notificationCenter = UNUserNotificationCenter.current()
@@ -91,7 +93,7 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
                     status = await Location.instance.checkBackgroundStatus()
 #endif
                 default:
-                    call.reject("Unable to check \(permission.rawValue) permission. Ensure you added permission flag in your Podfile.")
+                    call.reject("Unable to check \(permission.rawValue) permission. Ensure you added permission flag in your Podfile or SPM trait in your capacitor config.")
                     return
                 }
 
@@ -172,7 +174,7 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
 #endif
 
                 default:
-                    call.reject("Unable to request \(permission.rawValue) permission. Ensure you added permission flag in your Podfile.")
+                    call.reject("Unable to request \(permission.rawValue) permission. Ensure you added permission flag in your Podfile or SPM trait in your capacitor config.")
                     return
                 }
 
@@ -254,8 +256,10 @@ public class NativePermissionsPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc private func didBecomeActiveNotification() {
         NotificationCenter.default.removeObserver(self)
 
-        pendingSettingsCall?.resolve()
-        pendingSettingsCall = nil
+        DispatchQueue.main.async {
+            self.pendingSettingsCall?.resolve()
+            self.pendingSettingsCall = nil
+        }
     }
 
     private func getPermission(_ call: CAPPluginCall) -> AppPermission? {
