@@ -6,7 +6,7 @@
 
 import AVFoundation
 
-internal final class Audio {
+internal final class Audio: Sendable {
     internal static let instance = Audio()
 
     internal func checkRecordPermission() -> PermissionStatus {

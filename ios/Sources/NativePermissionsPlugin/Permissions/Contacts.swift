@@ -6,7 +6,7 @@
 
 import Contacts
 
-internal final class Contacts {
+internal final class Contacts: Sendable {
     internal static let instance = Contacts()
 
     internal func checkStatus() -> PermissionStatus {
