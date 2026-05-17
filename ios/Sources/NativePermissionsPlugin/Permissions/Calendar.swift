@@ -5,10 +5,10 @@
 #if PERMISSION_CALENDAR
 
 import Capacitor
-import EventKit
+@preconcurrency import EventKit
 import Foundation
 
-internal final class Calendar {
+internal final class Calendar: Sendable {
     internal static let instance = Calendar()
 
     private let store = EKEventStore()

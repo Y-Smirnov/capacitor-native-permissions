@@ -5,10 +5,10 @@
 #if PERMISSION_REMINDERS
 
 import Capacitor
-import EventKit
+@preconcurrency import EventKit
 import Foundation
 
-internal final class Reminders {
+internal final class Reminders: Sendable {
     internal static let instance = Reminders()
 
     private let store = EKEventStore()

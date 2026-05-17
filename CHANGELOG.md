@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 1.2.0
+
+- Add: Capacitor 8 support
+- Add: SPM support
+
+#### iOS
+
+- Fix: properly handle multiple Bluetooth requests without leaking continuation
+
 ## 1.1.1
 
 #### Android

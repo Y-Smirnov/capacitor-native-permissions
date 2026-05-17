@@ -4,7 +4,9 @@
 
 #if PERMISSION_NOTIFICATIONS
 
-internal struct Notifications {
+@preconcurrency import UserNotifications
+
+internal struct Notifications: Sendable {
     internal static let instance = Notifications()
 
     private let notificationCenter = UNUserNotificationCenter.current()

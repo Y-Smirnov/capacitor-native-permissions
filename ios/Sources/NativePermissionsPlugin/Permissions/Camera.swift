@@ -6,7 +6,7 @@
 
 import AVFoundation
 
-internal final class Camera {
+internal final class Camera: Sendable {
     internal static let instance = Camera()
 
     internal func checkStatus() -> PermissionStatus {
