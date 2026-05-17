@@ -25,7 +25,7 @@ const Home: React.FC = () => {
         showResult(success(res));
       } catch (e) {
         console.error(e);
-        showResult(failure);
+        showResult(`${failure}: ${e}`);
       }
     },
     [showResult],
